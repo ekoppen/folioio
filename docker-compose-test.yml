@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # Test PostgreSQL with hardcoded password
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: portfolio_db
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: test123
+      POSTGRES_INITDB_ARGS: --encoding=UTF-8 --locale=C
+    ports:
+      - "5433:5432"  # Changed port to avoid conflicts
+    networks:
+      - test-network
+    restart: unless-stopped
+    container_name: test-postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio -d portfolio_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Test MinIO Storage
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: testaccess
+      MINIO_ROOT_PASSWORD: testsecret
+    ports:
+      - "9003:9000"  # MinIO API port
+      - "9004:9001"  # Console port
+    volumes:
+      - minio_test_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - test-network
+    restart: unless-stopped
+    container_name: test-minio
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Test API with hardcoded password
+  api-server:
+    build: ./local-backend
+    ports:
+      - "3001:3000"  # Changed port to avoid conflicts
+    environment:
+      NODE_ENV: production
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: portfolio_db
+      DATABASE_USER: portfolio
+      DATABASE_PASSWORD: test123
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: testaccess
+      MINIO_SECRET_KEY: testsecret
+      JWT_SECRET: test-jwt-secret-key
+      CORS_ORIGIN: "*"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - test-network
+    restart: unless-stopped
+    container_name: test-api
+
+volumes:
+  minio_test_data:
+
+networks:
+  test-network:
+    driver: bridge

@@ -1,0 +1,233 @@
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ContactModal } from '@/components/ContactModal';
+import { supabase } from '@/integrations/supabase/client';
+import { Palette, Camera, Laptop, Heart, Mail } from 'lucide-react';
+import { useAccentColor } from '@/hooks/useAccentColor';
+import { useTranslation } from '@/hooks/useTranslation';
+
+interface AboutSettings {
+  main_title: string;
+  intro_text: string;
+  description_text: string;
+  skills: string[];
+  services: Array<{
+    icon: string;
+    title: string;
+    description: string;
+  }>;
+  stats: Array<{
+    number: string;
+    label: string;
+  }>;
+  quote_text: string;
+  quote_author: string;
+  profile_photo_url?: string;
+}
+
+const iconMap: Record<string, any> = {
+  Palette,
+  Camera,
+  Laptop,
+  Heart
+};
+
+const About = () => {
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const { t } = useTranslation();
+  const [settings, setSettings] = useState<AboutSettings>({
+    main_title: 'Over Mij',
+    intro_text: 'Hallo! Ik ben een gepassioneerde creatieve professional die graag verhalen vertelt door middel van visuele kunst, fotografie en digitaal ontwerp. Met meer dan 5 jaar ervaring help ik klanten hun visie tot leven te brengen.',
+    description_text: 'Mijn werk wordt gedreven door nieuwsgierigheid en de wens om betekenisvolle verbindingen te maken tussen mensen en merken. Elke project is een nieuwe kans om iets unieks te creëren.',
+    skills: ['Fotografie', 'Grafisch Ontwerp', 'Web Development', 'Digitale Kunst', 'UI/UX Design'],
+    services: [
+      {
+        icon: 'Palette',
+        title: 'Creatief Ontwerp',
+        description: 'Van concept tot uitvoering, ik creëer visuele identiteiten die impact maken.'
+      },
+      {
+        icon: 'Camera',
+        title: 'Fotografie',
+        description: 'Professionele fotografie voor portretten, evenementen en commerciële doeleinden.'
+      },
+      {
+        icon: 'Laptop',
+        title: 'Digitale Oplossingen',
+        description: 'Websites en digitale ervaringen die gebruikers boeien en converteren.'
+      }
+    ],
+    stats: [
+      { number: '50+', label: 'Projecten' },
+      { number: '25+', label: 'Tevreden Klanten' },
+      { number: '5+', label: 'Jaar Ervaring' }
+    ],
+    quote_text: 'Creativiteit is niet wat je ziet, maar wat je anderen laat zien.',
+    quote_author: 'Edgar Degas',
+    profile_photo_url: undefined
+  });
+  
+  useAccentColor(); // Initialize dynamic accent color
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('about_settings')
+        .select('*')
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (data) {
+        setSettings({
+          main_title: data.main_title,
+          intro_text: data.intro_text,
+          description_text: data.description_text,
+          skills: (data.skills as string[]) || [],
+          services: (data.services as AboutSettings['services']) || [],
+          stats: (data.stats as AboutSettings['stats']) || [],
+          quote_text: data.quote_text,
+          quote_author: data.quote_author,
+          profile_photo_url: data.profile_photo_url
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching about settings:', error);
+    }
+  };
+
+  return (
+    <section id="about" className="section-padding bg-muted/30 snap-section">
+      <div className="container mx-auto">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          {/* Left Content */}
+          <div className="animate-slide-in-left">
+            <div className="flex items-start gap-6 mb-6">
+              {settings.profile_photo_url && (
+                <img
+                  src={settings.profile_photo_url}
+                  alt="Profielfoto"
+                  className="w-32 h-32 object-cover rounded-lg flex-shrink-0 shadow-lg"
+                />
+              )}
+              <div className="flex-1">
+                <h2 className="text-4xl md:text-5xl font-bold mb-4 font-title">
+                  {t('about_settings.main_title', settings.main_title).split(' ')[0]}{' '}
+                  <span style={{ color: 'hsl(var(--dynamic-accent))' }}>
+                    {t('about_settings.main_title', settings.main_title).split(' ').slice(1).join(' ')}
+                  </span>
+                </h2>
+                
+                <p className="text-lg text-muted-foreground font-content">
+                  {t('about_settings.intro_text', settings.intro_text)}
+                </p>
+              </div>
+            </div>
+            
+            <p className="text-lg text-muted-foreground mb-8 font-content">
+              {t('about_settings.description_text', settings.description_text)}
+            </p>
+
+            {/* Skills */}
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold mb-4 font-title">{t('about.expertise', 'Expertise')}</h3>
+              <div className="flex flex-wrap gap-2">
+                {settings.skills.map((skill) => (
+                  <Badge key={skill} variant="secondary" className="px-3 py-1">
+                    {t(`skills.${skill.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`, skill)}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-6">
+              {settings.stats.filter(stat => stat.number && stat.label).map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="text-2xl font-bold mb-1" style={{ color: 'hsl(var(--dynamic-accent))' }}>
+                    {stat.number}
+                  </div>
+                   <div className="text-sm text-muted-foreground">
+                     {t(`stats.${stat.label.toLowerCase().replace(/\s+/g, '_')}`, stat.label)}
+                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Content - Services */}
+          <div className="animate-slide-in-right">
+            <div className="space-y-6">
+              {settings.services.map((service, index) => {
+                const IconComponent = iconMap[service.icon] || Palette;
+                return (
+                  <Card 
+                    key={service.title} 
+                    className="border-portfolio-border hover:shadow-lg transition-all duration-300 animate-scale-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-lg" style={{ color: 'hsl(var(--dynamic-accent))', backgroundColor: 'hsl(var(--dynamic-accent) / 0.1)' }}>
+                          <IconComponent className="w-8 h-8" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-semibold mb-2 font-title">
+                            {t(`service.${service.title.toLowerCase().replace(/ /g, '_')}`, service.title)}
+                          </h3>
+                          <p className="text-muted-foreground font-content">
+                            {t(`service.${service.title.toLowerCase().replace(/ /g, '_')}_desc`, service.description)}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Quote */}
+            <Card className="mt-8" style={{ backgroundColor: 'hsl(var(--dynamic-accent) / 0.05)', borderColor: 'hsl(var(--dynamic-accent) / 0.2)' }}>
+              <CardContent className="p-6 text-center">
+                <Heart className="w-8 h-8 mx-auto mb-4" style={{ color: 'hsl(var(--dynamic-accent))' }} />
+                <blockquote className="text-lg font-medium mb-2 font-content">
+                  "{t('about_settings.quote_text', settings.quote_text)}"
+                </blockquote>
+                <cite className="text-sm text-muted-foreground font-content">- {t('about_settings.quote_author', settings.quote_author)}</cite>
+              </CardContent>
+            </Card>
+
+            {/* Contact Button */}
+            <div className="mt-8 text-center">
+              <Button
+                onClick={() => setIsContactModalOpen(true)}
+                size="lg"
+                className="text-white font-content"
+                style={{ backgroundColor: 'hsl(var(--dynamic-accent))', borderColor: 'hsl(var(--dynamic-accent))' }}
+              >
+                <Mail className="w-5 h-5 mr-2" />
+                {t('about.contact_button', 'Neem Contact Op')}
+              </Button>
+              <p className="text-sm text-muted-foreground mt-2 font-content">
+                {t('about.contact_subtitle', 'Klaar om samen aan je volgende project te werken?')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <ContactModal 
+        open={isContactModalOpen} 
+        onOpenChange={setIsContactModalOpen} 
+      />
+    </section>
+  );
+};
+
+export default About;

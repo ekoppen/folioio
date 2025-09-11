@@ -1,0 +1,18 @@
+# Production docker-compose template
+# This file is used as a template for individual deployments
+
+services:
+  portfolio:
+    build: .
+    ports:
+      - "${PORT:-3001}:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    container_name: "${CONTAINER_NAME:-portfolio-site}"
+    networks:
+      - portfolio-network
+
+networks:
+  portfolio-network:
+    driver: bridge

@@ -1,0 +1,224 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 220 13% 18%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 13% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 13% 18%;
+
+    --primary: 220 13% 18%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 220 13% 95%;
+    --secondary-foreground: 220 13% 18%;
+
+    --muted: 220 13% 95%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 220 13% 95%;
+    --accent-foreground: 220 13% 18%;
+
+    /* Portfolio specific colors */
+    --portfolio-dark: 220 13% 18%;
+    --portfolio-light: 0 0% 98%;
+    --portfolio-accent: 47 96% 53%;
+    --portfolio-muted: 220 9% 46%;
+    --portfolio-border: 220 13% 91%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(220 13% 18%), hsl(220 13% 25%));
+    --gradient-accent: linear-gradient(135deg, hsl(47 96% 53%), hsl(45 93% 47%));
+    --gradient-overlay: linear-gradient(180deg, transparent, hsla(220 13% 18% / 0.8));
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Font families - will be set dynamically by useFonts hook */
+    --font-title: 'Playfair Display', serif;
+    --font-content: 'Inter', sans-serif;
+  }
+
+  .dark {
+    --background: 220 13% 9%;
+    --foreground: 0 0% 95%;
+
+    --card: 220 13% 12%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 220 13% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 0 0% 95%;
+    --primary-foreground: 220 13% 9%;
+
+    --secondary: 220 13% 15%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 220 13% 15%;
+    --muted-foreground: 220 9% 65%;
+
+    --accent: 220 13% 15%;
+    --accent-foreground: 0 0% 95%;
+
+    /* Portfolio dark mode */
+    --portfolio-dark: 0 0% 95%;
+    --portfolio-light: 220 13% 9%;
+    --portfolio-accent: 47 96% 53%;
+    --portfolio-muted: 220 9% 65%;
+    --portfolio-border: 220 13% 20%;
+    
+    --gradient-primary: linear-gradient(135deg, hsl(220 13% 9%), hsl(220 13% 15%));
+    --gradient-accent: linear-gradient(135deg, hsl(47 96% 53%), hsl(45 93% 47%));
+    --gradient-overlay: linear-gradient(180deg, transparent, hsla(220 13% 9% / 0.9));
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Font families - inherited from light mode, can be overridden */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Smooth scrolling with snap */
+  html {
+    scroll-behavior: smooth;
+    scroll-snap-type: y mandatory;
+  }
+  
+  /* Snap sections */
+  .snap-section {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/50 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/70;
+  }
+}
+
+@layer components {
+  /* Portfolio specific utilities */
+  .portfolio-gradient {
+    background: var(--gradient-primary);
+  }
+  
+  .accent-gradient {
+    background: var(--gradient-accent);
+  }
+  
+  .overlay-gradient {
+    background: var(--gradient-overlay);
+  }
+  
+  .glass-effect {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+  
+  .section-padding {
+    @apply py-20 px-6;
+  }
+  
+  /* Font utilities */
+  .font-title {
+    font-family: var(--font-title);
+  }
+  
+  .font-content {
+    font-family: var(--font-content);
+  }
+  
+  /* Image protection styles for artwork */
+  .protected-image {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    -khtml-user-select: none;
+    pointer-events: none;
+  }
+  
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  .artwork-protection {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+}

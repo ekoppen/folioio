@@ -1,0 +1,102 @@
+# Local Portfolio Deployment Template
+# This file is used as a template for local deployments with full backend
+
+services:
+  portfolio-app:
+    build: 
+      context: .
+      args:
+        - VITE_LOCAL_API_URL=${API_EXTERNAL_URL:-http://localhost:3140}
+        - VITE_BACKEND_TYPE=local
+    ports:
+      - "${FRONTEND_PORT:-3001}:80"
+    depends_on:
+      - api-server
+      - postgres
+      - minio
+    restart: unless-stopped
+    container_name: "${CONTAINER_NAME:-portfolio-site}"
+    networks:
+      - portfolio-network
+
+  api-server:
+    build: ./local-backend
+    ports:
+      - "${API_PORT:-3140}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=portfolio_db
+      - DATABASE_USER=portfolio
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioaccess}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-miniosecret}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-at-least-32-characters-long-for-production}
+      - CORS_ORIGIN=*
+    restart: unless-stopped
+    container_name: "${API_CONTAINER_NAME:-portfolio-api}"
+    networks:
+      - portfolio-network
+
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    environment:
+      - POSTGRES_DB=portfolio_db
+      - POSTGRES_USER=portfolio
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --locale=C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-config:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    container_name: "${DB_CONTAINER_NAME:-portfolio-db}"
+    networks:
+      - portfolio-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio -d portfolio_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "${STORAGE_PORT:-9000}:9000"
+      - "${STORAGE_CONSOLE_PORT:-9001}:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minioaccess}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-miniosecret}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    container_name: "${STORAGE_CONTAINER_NAME:-portfolio-storage}"
+    networks:
+      - portfolio-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  postgres_data:
+    name: "${VOLUME_PREFIX:-portfolio}_postgres_data"
+  minio_data:
+    name: "${VOLUME_PREFIX:-portfolio}_minio_data"
+
+networks:
+  portfolio-network:
+    driver: bridge
+    name: "${NETWORK_NAME:-portfolio-network}"

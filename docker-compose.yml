@@ -1,0 +1,19 @@
+services:
+  portfolio-site:
+    build: .
+    ports:
+      - "3001:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    container_name: portfolio-site-1
+    
+  # Example voor een tweede site
+  # portfolio-site-2:
+  #   build: .
+  #   ports:
+  #     - "3002:80"
+  #   environment:
+  #     - NODE_ENV=production
+  #   restart: unless-stopped
+  #   container_name: portfolio-site-2
