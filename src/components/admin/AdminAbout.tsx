@@ -77,6 +77,8 @@ const AdminAbout = () => {
       const { data, error } = await supabase
         .from('about_settings')
         .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
@@ -109,20 +111,26 @@ const AdminAbout = () => {
 
   const saveSettings = async () => {
     try {
+      let upsertData = {
+        main_title: settings.main_title,
+        intro_text: settings.intro_text,
+        description_text: settings.description_text,
+        skills: settings.skills,
+        services: settings.services,
+        stats: settings.stats,
+        quote_text: settings.quote_text,
+        quote_author: settings.quote_author,
+        profile_photo_url: settings.profile_photo_url
+      };
+
+      // Only include id if it exists
+      if (settings.id) {
+        upsertData.id = settings.id;
+      }
+
       const { error } = await supabase
         .from('about_settings')
-        .upsert({
-          id: settings.id || undefined,
-          main_title: settings.main_title,
-          intro_text: settings.intro_text,
-          description_text: settings.description_text,
-          skills: settings.skills,
-          services: settings.services,
-          stats: settings.stats,
-          quote_text: settings.quote_text,
-          quote_author: settings.quote_author,
-          profile_photo_url: settings.profile_photo_url
-        });
+        .upsert(upsertData);
 
       if (error) throw error;
       

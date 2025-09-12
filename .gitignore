@@ -15,6 +15,10 @@ dist-ssr
 # Deployment directories (contain sensitive data)
 deployments/
 
+# Data directories (database and file storage)
+data/
+*/data/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

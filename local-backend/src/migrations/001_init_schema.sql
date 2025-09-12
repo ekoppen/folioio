@@ -318,20 +318,48 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Apply updated_at triggers
+-- Apply updated_at triggers (drop and recreate to avoid conflicts)
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_site_settings_updated_at ON public.site_settings;
 CREATE TRIGGER update_site_settings_updated_at BEFORE UPDATE ON public.site_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_languages_updated_at ON public.languages;
 CREATE TRIGGER update_languages_updated_at BEFORE UPDATE ON public.languages FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_translations_updated_at ON public.translations;
 CREATE TRIGGER update_translations_updated_at BEFORE UPDATE ON public.translations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_albums_updated_at ON public.albums;
 CREATE TRIGGER update_albums_updated_at BEFORE UPDATE ON public.albums FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_photos_updated_at ON public.photos;
+DROP TRIGGER IF EXISTS update_photos_updated_at ON public.photos;
 CREATE TRIGGER update_photos_updated_at BEFORE UPDATE ON public.photos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_slideshow_updated_at ON public.slideshow;
 CREATE TRIGGER update_slideshow_updated_at BEFORE UPDATE ON public.slideshow FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_pages_updated_at ON public.pages;
 CREATE TRIGGER update_pages_updated_at BEFORE UPDATE ON public.pages FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_page_builder_pages_updated_at ON public.page_builder_pages;
 CREATE TRIGGER update_page_builder_pages_updated_at BEFORE UPDATE ON public.page_builder_pages FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_page_builder_elements_updated_at ON public.page_builder_elements;
 CREATE TRIGGER update_page_builder_elements_updated_at BEFORE UPDATE ON public.page_builder_elements FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_footer_elements_updated_at ON public.footer_elements;
 CREATE TRIGGER update_footer_elements_updated_at BEFORE UPDATE ON public.footer_elements FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_about_settings_updated_at ON public.about_settings;
 CREATE TRIGGER update_about_settings_updated_at BEFORE UPDATE ON public.about_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_contact_settings_updated_at ON public.contact_settings;
 CREATE TRIGGER update_contact_settings_updated_at BEFORE UPDATE ON public.contact_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_contact_messages_updated_at ON public.contact_messages;
 CREATE TRIGGER update_contact_messages_updated_at BEFORE UPDATE ON public.contact_messages FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert default data
@@ -397,6 +425,7 @@ END;
 $$;
 
 -- Create trigger for new user profile creation
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();

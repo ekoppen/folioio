@@ -47,7 +47,7 @@ export const ContactModal = ({ open, onOpenChange }: ContactModalProps) => {
           .select('contact_email, contact_phone, contact_address')
           .order('updated_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
         
         if (data) {
           setContactSettings({

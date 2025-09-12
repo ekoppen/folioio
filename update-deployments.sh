@@ -123,6 +123,10 @@ update_deployment() {
     # Go to deployment directory
     cd "$deploy_dir"
     
+    # Create data directories if they don't exist
+    echo "  📁 Ensuring data directories exist..."
+    mkdir -p data/postgres data/minio
+    
     # Restore .env file
     if [ -f ".env.backup" ]; then
         echo "  🔧 Restoring environment configuration..."

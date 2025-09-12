@@ -55,6 +55,7 @@ const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [pages, setPages] = useState<NavigationPage[]>([]);
+  const [customSections, setCustomSections] = useState<any[]>([]);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>({
     site_title: 'Portfolio',
@@ -158,7 +159,7 @@ const Navigation = () => {
         .select('site_title, show_site_title, header_transparent, header_blur, header_background_opacity, logo_url, logo_height, logo_position, logo_margin_top, logo_margin_left, logo_shadow, nav_title_visible, nav_tagline_visible, nav_title_font_family, nav_title_font_url, nav_tagline_font_family, nav_tagline_font_url, nav_title_font_size, nav_tagline_font_size, nav_title_color, nav_tagline_color, nav_title_margin_top, nav_title_margin_left, nav_tagline_margin_top, nav_tagline_margin_left, nav_text_shadow, site_tagline')
         .order('updated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
         
       if (data) {
         setSiteSettings({
@@ -193,9 +194,42 @@ const Navigation = () => {
       }
     };
     
+    const loadCustomSections = async () => {
+      try {
+        const response = await fetch('/api/custom-sections');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setCustomSections(data.data.filter((section: any) => section.show_in_navigation));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading custom sections:', error);
+      }
+    };
+
     loadPages();
     loadSettings();
+    loadCustomSections();
   }, []);
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      // Get actual header height dynamically
+      const header = document.querySelector('header');
+      const headerHeight = header ? header.offsetHeight : 80;
+      
+      // Use a more reliable scroll method
+      setTimeout(() => {
+        const elementTop = element.offsetTop - headerHeight - 10; // Small buffer
+        window.scrollTo({ 
+          top: Math.max(0, elementTop), // Ensure we don't scroll to negative values
+          behavior: 'smooth' 
+        });
+      }, 10); // Small delay to ensure layout is settled
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -331,13 +365,36 @@ const Navigation = () => {
               : 'md:ml-16 lg:ml-0'
           }`}>
             <button
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onClick={() => scrollToSection('hero')}
               className="text-white/90 hover:text-white transition-colors"
             >
               {t('nav.home', 'Home')}
             </button>
+            
+            <button
+              onClick={() => scrollToSection('portfolio')}
+              className="text-white/90 hover:text-white transition-colors"
+            >
+              {t('nav.portfolio', 'Portfolio')}
+            </button>
+            
+            <button
+              onClick={() => scrollToSection('about')}
+              className="text-white/90 hover:text-white transition-colors"
+            >
+              {t('nav.about', 'Over Mij')}
+            </button>
+            
+            {/* Custom sections in navigation */}
+            {customSections.map((section) => (
+              <button
+                key={section.id}
+                onClick={() => scrollToSection(`custom-${section.slug}`)}
+                className="text-white/90 hover:text-white transition-colors"
+              >
+                {section.title}
+              </button>
+            ))}
             
             {pages.map((page) => (
               <div key={page.id} className="relative">
@@ -376,28 +433,6 @@ const Navigation = () => {
               </div>
             ))}
             
-            <button
-              onClick={() => {
-                document.getElementById('portfolio')?.scrollIntoView({ 
-                  behavior: 'smooth',
-                  block: 'start'
-                });
-              }}
-              className="text-white/90 hover:text-white transition-colors"
-            >
-              {t('nav.portfolio', 'Portfolio')}
-            </button>
-            <button
-              onClick={() => {
-                document.getElementById('about')?.scrollIntoView({ 
-                  behavior: 'smooth',
-                  block: 'start'
-                });
-              }}
-              className="text-white/90 hover:text-white transition-colors"
-            >
-              {t('nav.about', 'About')}
-            </button>
             <button
               onClick={() => setIsContactModalOpen(true)}
               className="text-white/90 hover:text-white transition-colors flex items-center gap-2"
@@ -542,30 +577,6 @@ const Navigation = () => {
                 </div>
               ))}
               
-              <button
-                onClick={() => {
-                  document.getElementById('portfolio')?.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                  });
-                  setIsMobileMenuOpen(false);
-                }}
-                className="block text-white/90 hover:text-white transition-colors py-2 w-full text-left"
-              >
-                {t('nav.portfolio', 'Portfolio')}
-              </button>
-              <button
-                onClick={() => {
-                  document.getElementById('about')?.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                  });
-                  setIsMobileMenuOpen(false);
-                }}
-                className="block text-white/90 hover:text-white transition-colors py-2 w-full text-left"
-              >
-                {t('nav.about', 'About')}
-              </button>
               <button
                 onClick={() => {
                   setIsContactModalOpen(true);

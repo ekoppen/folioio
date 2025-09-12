@@ -179,13 +179,29 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
     home_show_title_overlay: true,
     home_show_buttons: true
   });
+  const [customSections, setCustomSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
 
   useEffect(() => {
     fetchHomePhotos();
     fetchSettings();
+    fetchCustomSections();
   }, []);
+
+  const fetchCustomSections = async () => {
+    try {
+      const response = await fetch('/api/custom-sections');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setCustomSections(data.data.filter((section: any) => section.show_hero_button));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching custom sections:', error);
+    }
+  };
 
   const fetchHomePhotos = async () => {
     try {
@@ -227,7 +243,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
         .select('site_title, site_tagline, home_show_title_overlay, home_show_buttons, accent_color, footer_background_color, footer_opacity, logo_margin_left, content_font_family, title_font_family, header_title, header_subtitle, header_description, header_font_family, title_visible, title_font_family, title_font_size, title_color, title_position, tagline_visible, tagline_font_family, tagline_font_size, tagline_color, tagline_position, slideshow_interval, slideshow_transition, slideshow_info_card_enabled, slideshow_info_card_radius, slideshow_info_card_opacity, slideshow_info_card_position, slideshow_info_card_text_size, slideshow_show_arrows, slideshow_show_dots')
         .order('updated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       
@@ -304,7 +320,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
   // Dynamic styles for accent color
   const accentStyle = settings.accent_color ? { backgroundColor: settings.accent_color } : {};
   return (
-    <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden snap-section">
+    <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden snap-section">
       {/* Background Images */}
       <div className="absolute inset-0 z-0">
         {photosToShow.length > 0 ? (
@@ -389,7 +405,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
           )}
           
           {settings.home_show_buttons && (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-scale-in">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-scale-in flex-wrap">
               <Button 
                 size="lg" 
                 onClick={() => {
@@ -416,6 +432,24 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
               >
                 {t('hero.learn_more', 'Meer Over Mij')}
               </Button>
+              
+              {/* Custom section buttons */}
+              {customSections.map((section) => (
+                <Button 
+                  key={section.id}
+                  variant="outline"
+                  size="lg" 
+                  onClick={() => {
+                    document.getElementById(`custom-${section.slug}`)?.scrollIntoView({ 
+                      behavior: 'smooth',
+                      block: 'start'
+                    });
+                  }}
+                  className="glass-effect text-white border-white/30 bg-white/20 hover:bg-white/10"
+                >
+                  {section.button_text || section.title}
+                </Button>
+              ))}
             </div>
           )}
         </div>

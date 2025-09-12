@@ -43,7 +43,7 @@ export const useAccentColor = () => {
           .select('accent_color')
           .order('updated_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
         

@@ -47,7 +47,13 @@ router.post('/', async (req, res) => {
         }
         
         const insertKeys = Object.keys(insertObject);
-        const insertValues = Object.values(insertObject);
+        const insertValues = Object.values(insertObject).map(value => {
+          // Convert objects and arrays to JSON strings for JSONB columns
+          if (typeof value === 'object' && value !== null && typeof value !== 'string') {
+            return JSON.stringify(value);
+          }
+          return value;
+        });
         
         // Debug: log the final object being inserted
         console.log('Inserting into', table, ':', insertObject);
@@ -72,7 +78,10 @@ router.post('/', async (req, res) => {
         }
         
         const updatePairs = Object.keys(data).map(key => {
-          params.push(data[key]);
+          const value = data[key];
+          // Convert objects and arrays to JSON strings for JSONB columns
+          const processedValue = (typeof value === 'object' && value !== null) ? JSON.stringify(value) : value;
+          params.push(processedValue);
           return `${key} = $${paramIndex++}`;
         });
         
@@ -87,7 +96,13 @@ router.post('/', async (req, res) => {
         }
         
         const upsertKeys = Object.keys(data);
-        const upsertValues = Object.values(data);
+        const upsertValues = Object.values(data).map(value => {
+          // Convert objects and arrays to JSON strings for JSONB columns
+          if (typeof value === 'object' && value !== null && typeof value !== 'string') {
+            return JSON.stringify(value);
+          }
+          return value;
+        });
         const upsertPlaceholders = upsertValues.map(() => `$${paramIndex++}`).join(', ');
         const conflictColumn = options?.onConflict || 'id';
         

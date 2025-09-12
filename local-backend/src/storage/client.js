@@ -38,7 +38,8 @@ async function createDefaultBuckets() {
     { name: 'slideshow-images', public: true },
     { name: 'logos', public: true },
     { name: 'custom-fonts', public: true },
-    { name: 'fotos', public: true }
+    { name: 'fotos', public: true },
+    { name: 'custom-sections', public: true }
   ];
   
   for (const bucket of defaultBuckets) {

@@ -20,7 +20,7 @@ export const useFonts = () => {
           .select('title_font_family, title_font_url, content_font_family, content_font_url')
           .order('updated_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
         

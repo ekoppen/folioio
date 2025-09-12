@@ -55,7 +55,7 @@ const PortfolioGallery = ({ onAlbumSelect }: PortfolioGalleryProps) => {
         .select('portfolio_title, portfolio_description, portfolio_enabled, accent_color')
         .order('updated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       

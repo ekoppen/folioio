@@ -60,7 +60,7 @@ export const TranslationProvider = ({ children }: TranslationProviderProps) => {
         .from('site_settings')
         .select('default_language')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       

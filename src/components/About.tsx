@@ -80,21 +80,27 @@ const About = () => {
       const { data, error } = await supabase
         .from('about_settings')
         .select('*')
-        .maybeSingle();
+        .order('updated_at', { ascending: false })
+        .limit(1);
+      
+      // Extract first record if array
+      const record = data && Array.isArray(data) ? data[0] : data;
 
       if (error) throw error;
       
-      if (data) {
+      if (record) {
+        console.log('About settings record:', record);
+        console.log('Profile photo URL from DB:', record.profile_photo_url);
         setSettings({
-          main_title: data.main_title,
-          intro_text: data.intro_text,
-          description_text: data.description_text,
-          skills: (data.skills as string[]) || [],
-          services: (data.services as AboutSettings['services']) || [],
-          stats: (data.stats as AboutSettings['stats']) || [],
-          quote_text: data.quote_text,
-          quote_author: data.quote_author,
-          profile_photo_url: data.profile_photo_url
+          main_title: record.main_title,
+          intro_text: record.intro_text,
+          description_text: record.description_text,
+          skills: (record.skills as string[]) || [],
+          services: (record.services as AboutSettings['services']) || [],
+          stats: (record.stats as AboutSettings['stats']) || [],
+          quote_text: record.quote_text,
+          quote_author: record.quote_author,
+          profile_photo_url: record.profile_photo_url
         });
       }
     } catch (error) {
@@ -109,12 +115,16 @@ const About = () => {
           {/* Left Content */}
           <div className="animate-slide-in-left">
             <div className="flex items-start gap-6 mb-6">
-              {settings.profile_photo_url && (
+              {settings.profile_photo_url ? (
                 <img
                   src={settings.profile_photo_url}
                   alt="Profielfoto"
                   className="w-32 h-32 object-cover rounded-lg flex-shrink-0 shadow-lg"
+                  onError={(e) => console.log('Image failed to load:', e)}
+                  onLoad={() => console.log('Image loaded successfully:', settings.profile_photo_url)}
                 />
+              ) : (
+                console.log('No profile photo URL found:', settings.profile_photo_url)
               )}
               <div className="flex-1">
                 <h2 className="text-4xl md:text-5xl font-bold mb-4 font-title">

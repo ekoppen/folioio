@@ -9,6 +9,7 @@ const authRoutes = require('./auth/routes');
 const databaseRoutes = require('./database/routes');
 const storageRoutes = require('./storage/routes');
 const functionsRoutes = require('./functions/routes');
+const customSectionsRoutes = require('./routes/customSections');
 const { initializeDatabase } = require('./database/client');
 const { initializeStorage } = require('./storage/client');
 const migrator = require('./database/migrator');
@@ -100,6 +101,11 @@ app.use('/functions', (req, res, next) => {
   console.log(`Functions route: ${req.method} ${req.path}`);
   next();
 }, functionsRoutes);
+
+app.use('/custom-sections', (req, res, next) => {
+  console.log(`Custom Sections route: ${req.method} ${req.path}`);
+  next();
+}, customSectionsRoutes);
 
 console.log('API routes mounted successfully');
 

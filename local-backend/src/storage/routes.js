@@ -57,7 +57,7 @@ router.get('/:bucket/:path(*)', checkStorageAvailable, async (req, res, next) =>
     const { bucket, path } = req.params;
     
     // Allow public access to common portfolio buckets without authentication
-    const PUBLIC_BUCKETS = ['gallery-images', 'slideshow-images', 'logos', 'fotos'];
+    const PUBLIC_BUCKETS = ['gallery-images', 'slideshow-images', 'logos', 'fotos', 'custom-sections'];
     
     if (PUBLIC_BUCKETS.includes(bucket)) {
       console.log(`Public bucket access: ${bucket}/${path}`);
