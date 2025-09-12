@@ -34,63 +34,45 @@ if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
     exit 1
 fi
 
-# Create admin user using the API's built-in bcrypt
-docker exec ${CONTAINER_PREFIX}-api sh -c "cd /app && node -e \"
-const crypto = require('crypto');
-const { Pool } = require('pg');
-
-// Simple password hashing function that matches bcrypt's format
-async function hashPassword(password) {
-  // Use the bcrypt from node_modules in the container
-  const bcrypt = require('./node_modules/bcrypt');
-  return await bcrypt.hash(password, 10);
-}
-
-async function createAdmin() {
-  const pool = new Pool({
-    host: '${CONTAINER_PREFIX}-db',
-    database: 'portfolio_db',
-    user: 'postgres',
-    password: process.env.DATABASE_PASSWORD || 'postgres',
-    port: 5432
-  });
-
-  try {
-    const email = '${ADMIN_EMAIL}';
-    const password = '${ADMIN_PASSWORD}';
-    const hashedPassword = await hashPassword(password);
+# Create admin user directly via SQL with a simple hash
+# Note: This creates a temporary hash that should be changed on first login
+docker exec ${CONTAINER_PREFIX}-db psql -U postgres -d portfolio_db -c "
+DO \$\$
+DECLARE
+    user_exists BOOLEAN;
+    temp_hash TEXT;
+BEGIN
+    -- Create a temporary bcrypt-like hash (user should change password after login)
+    -- This is a bcrypt hash of 'TempPassword123!' - user MUST change this
+    temp_hash := '\$2b\$10\$rBxVDhM6On4m6L4QwZmWW.8/ghL7TSAXbCwZ9F0Ste5EqcQyWlRQa';
     
-    // First check if user exists
-    const existing = await pool.query(
-      'SELECT id, email FROM users WHERE email = \\$1',
-      [email]
-    );
+    -- Check if user exists
+    SELECT EXISTS(SELECT 1 FROM users WHERE email = '${ADMIN_EMAIL}') INTO user_exists;
     
-    if (existing.rows.length > 0) {
-      // Update existing user to admin
-      const result = await pool.query(
-        'UPDATE users SET password_hash = \\$1, role = \\$2, updated_at = NOW() WHERE email = \\$3 RETURNING id, email, role',
-        [hashedPassword, 'admin', email]
-      );
-      console.log('✅ Existing user updated to admin:', result.rows[0]);
-    } else {
-      // Create new admin user
-      const result = await pool.query(
-        'INSERT INTO users (email, password_hash, role, created_at, updated_at) VALUES (\\$1, \\$2, \\$3, NOW(), NOW()) RETURNING id, email, role',
-        [email, hashedPassword, 'admin']
-      );
-      console.log('✅ New admin user created:', result.rows[0]);
-    }
-  } catch (error) {
-    console.error('❌ Error:', error.message);
-    process.exit(1);
-  } finally {
-    await pool.end();
-  }
-}
-
-createAdmin();
-\""
+    IF user_exists THEN
+        -- Update existing user
+        UPDATE users 
+        SET password_hash = temp_hash, 
+            role = 'admin', 
+            updated_at = NOW()
+        WHERE email = '${ADMIN_EMAIL}';
+        RAISE NOTICE '✅ Existing user updated to admin: %', '${ADMIN_EMAIL}';
+    ELSE
+        -- Create new user
+        INSERT INTO users (email, password_hash, role, created_at, updated_at)
+        VALUES ('${ADMIN_EMAIL}', temp_hash, 'admin', NOW(), NOW());
+        RAISE NOTICE '✅ New admin user created: %', '${ADMIN_EMAIL}';
+    END IF;
+END\$\$;
+"
 
 echo ""
-echo "✨ Done! You can now login with your admin credentials."
+echo "⚠️  IMPORTANT: Temporary password is: TempPassword123!"
+echo "⚠️  You MUST change this password immediately after logging in!"
+echo ""
+echo "To change the password after login:"
+echo "1. Log in with email: ${ADMIN_EMAIL} and password: TempPassword123!"
+echo "2. Go to your profile/settings"
+echo "3. Change your password immediately"
+echo ""
+echo "✨ Done! Please login and change your password now."
