@@ -128,6 +128,12 @@ echo "🔨 Building frontend with local backend..."
 npm install
 npm run build
 
+# Fix permissions before starting containers
+echo "🔧 Setting up proper permissions..."
+mkdir -p data
+chown -R 1000:1000 data/ 2>/dev/null || echo "⚠️ Could not set data directory ownership (may need sudo)"
+chmod -R 755 data/ 2>/dev/null || echo "⚠️ Could not set data directory permissions"
+
 # Start the stack
 echo "🐳 Starting Docker stack..."
 docker compose down 2>/dev/null
@@ -138,6 +144,24 @@ echo "🔍 Checking environment variables..."
 echo "Database password in .env: $(grep DATABASE_PASSWORD .env)"
 echo "API server sees: $(docker compose exec -T api-server env | grep DATABASE_PASSWORD || echo 'NOT FOUND')"
 echo "Postgres sees: $(docker compose exec -T postgres env | grep POSTGRES_PASSWORD || echo 'NOT FOUND')"
+
+# Fix Docker volume permissions after containers are created
+echo "🔒 Fixing Docker volume permissions..."
+sleep 5  # Let containers create volumes first
+
+# Fix PostgreSQL volume permissions
+POSTGRES_VOLUME="${SITE_NAME}_postgres_data"
+if docker volume inspect "$POSTGRES_VOLUME" >/dev/null 2>&1; then
+    echo "📊 Fixing PostgreSQL volume permissions..."
+    docker run --rm -v "$POSTGRES_VOLUME":/data alpine sh -c "chown -R 999:999 /data && chmod -R 700 /data" || echo "⚠️ Could not fix PostgreSQL volume permissions"
+fi
+
+# Fix MinIO volume permissions  
+MINIO_VOLUME="${SITE_NAME}_minio_data"
+if docker volume inspect "$MINIO_VOLUME" >/dev/null 2>&1; then
+    echo "💾 Fixing MinIO volume permissions..."
+    docker run --rm -v "$MINIO_VOLUME":/data alpine sh -c "chown -R 1000:1000 /data && chmod -R 755 /data" || echo "⚠️ Could not fix MinIO volume permissions"
+fi
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to start..."
