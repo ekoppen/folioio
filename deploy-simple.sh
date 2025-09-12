@@ -160,7 +160,19 @@ fi
 MINIO_VOLUME="${SITE_NAME}_minio_data"
 if docker volume inspect "$MINIO_VOLUME" >/dev/null 2>&1; then
     echo "💾 Fixing MinIO volume permissions..."
-    docker run --rm -v "$MINIO_VOLUME":/data alpine sh -c "chown -R 1000:1000 /data && chmod -R 755 /data" || echo "⚠️ Could not fix MinIO volume permissions"
+    docker run --rm -v "$MINIO_VOLUME":/data alpine sh -c "
+        find /data -type d -exec chmod 755 {} \;
+        find /data -type f -exec chmod 644 {} \;
+        chown -R 1000:1000 /data
+    " || echo "⚠️ Could not fix MinIO volume permissions"
+fi
+
+# Also fix local data directory recursively
+if [ -d "data" ]; then
+    echo "📁 Fixing local data directory permissions..."
+    sudo find data -type d -exec chmod 755 {} \; 2>/dev/null || echo "⚠️ Could not fix local data directory permissions (may need sudo)"
+    sudo find data -type f -exec chmod 644 {} \; 2>/dev/null || echo "⚠️ Could not fix local data file permissions"
+    sudo chown -R 1000:1000 data/ 2>/dev/null || echo "⚠️ Could not set local data directory ownership"
 fi
 
 # Wait for services to be ready
