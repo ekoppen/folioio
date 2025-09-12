@@ -3,7 +3,8 @@
 
 CREATE TABLE IF NOT EXISTS public.schema_migrations (
   version VARCHAR(255) PRIMARY KEY,
-  applied_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+  applied_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  checksum VARCHAR(255)
 );
 
 -- Create indexes for better performance
