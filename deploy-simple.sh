@@ -128,9 +128,10 @@ echo "🔨 Building frontend with local backend..."
 npm install
 npm run build
 
-# Docker volumes don't need pre-created directories
-echo "🔧 Using Docker volumes for data storage..."
-echo "✅ No permission setup needed (using Docker volumes)"
+# Create data directories for bind mounts
+echo "🔧 Creating data directories for bind mounts..."
+mkdir -p data/postgres data/minio
+echo "✅ Data directories created"
 
 # Start the stack
 echo "🐳 Starting Docker stack..."
@@ -143,30 +144,8 @@ echo "Database password in .env: $(grep DATABASE_PASSWORD .env)"
 echo "API server sees: $(docker compose exec -T api-server env | grep DATABASE_PASSWORD || echo 'NOT FOUND')"
 echo "Postgres sees: $(docker compose exec -T postgres env | grep POSTGRES_PASSWORD || echo 'NOT FOUND')"
 
-# Fix Docker volume permissions after containers are created
-echo "🔒 Fixing Docker volume permissions..."
-sleep 5  # Let containers create volumes first
-
-# Fix PostgreSQL volume permissions
-POSTGRES_VOLUME="${SITE_NAME}_postgres_data"
-if docker volume inspect "$POSTGRES_VOLUME" >/dev/null 2>&1; then
-    echo "📊 Fixing PostgreSQL volume permissions..."
-    docker run --rm -v "$POSTGRES_VOLUME":/data alpine sh -c "chown -R 999:999 /data && chmod -R 700 /data" || echo "⚠️ Could not fix PostgreSQL volume permissions"
-fi
-
-# Fix MinIO volume permissions  
-MINIO_VOLUME="${SITE_NAME}_minio_data"
-if docker volume inspect "$MINIO_VOLUME" >/dev/null 2>&1; then
-    echo "💾 Fixing MinIO volume permissions..."
-    docker run --rm -v "$MINIO_VOLUME":/data alpine sh -c "
-        find /data -type d -exec chmod 755 {} \;
-        find /data -type f -exec chmod 644 {} \;
-        chown -R 1000:1000 /data
-    " || echo "⚠️ Could not fix MinIO volume permissions"
-fi
-
-# Docker volumes handle permissions automatically
-echo "✅ Docker volumes configured - permissions handled automatically"
+# Bind mounts don't need permission fixes on macOS
+echo "✅ Bind mounts ready - no permission setup needed on macOS"
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to start..."
