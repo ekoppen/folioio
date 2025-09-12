@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { FontSelector } from './FontSelector';
 
 interface FooterSettings {
   footer_enabled: boolean;
@@ -274,34 +275,13 @@ const AdminFooter = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Lettertype</Label>
-              <Select value={settings.footer_font_family} onValueChange={(value) => updateSetting('footer_font_family', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="site" style={{ fontFamily: siteSettings.content_font_family }}>
-                    Website lettertype ({siteSettings.content_font_family})
-                  </SelectItem>
-                  <SelectItem value="Roboto" style={{ fontFamily: 'Roboto' }}>
-                    Roboto
-                  </SelectItem>
-                  <SelectItem value="Playfair Display" style={{ fontFamily: 'Playfair Display' }}>
-                    Playfair Display
-                  </SelectItem>
-                  <SelectItem value="Arial" style={{ fontFamily: 'Arial' }}>
-                    Arial
-                  </SelectItem>
-                  <SelectItem value="Helvetica" style={{ fontFamily: 'Helvetica' }}>
-                    Helvetica
-                  </SelectItem>
-                  <SelectItem value="Georgia" style={{ fontFamily: 'Georgia' }}>
-                    Georgia
-                  </SelectItem>
-                  <SelectItem value="Times New Roman" style={{ fontFamily: 'Times New Roman' }}>
-                    Times New Roman
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <FontSelector
+                value={settings.footer_font_family}
+                onChange={(value) => updateSetting('footer_font_family', value)}
+                label=""
+                allowSiteFont={true}
+                siteFont={siteSettings.content_font_family}
+              />
             </div>
 
             <div className="space-y-2">
