@@ -131,8 +131,13 @@ npm run build
 # Fix permissions before starting containers
 echo "🔧 Setting up proper permissions..."
 mkdir -p data
-chown -R 1000:1000 data/ 2>/dev/null || echo "⚠️ Could not set data directory ownership (may need sudo)"
-chmod -R 755 data/ 2>/dev/null || echo "⚠️ Could not set data directory permissions"
+
+# Try to fix permissions, fallback to Docker-based fix if needed
+if chown -R 1000:1000 data/ 2>/dev/null && chmod -R 755 data/ 2>/dev/null; then
+    echo "✅ Permissions set successfully"
+else
+    echo "⚠️ Could not set permissions directly, will fix after containers start..."
+fi
 
 # Start the stack
 echo "🐳 Starting Docker stack..."
@@ -167,12 +172,14 @@ if docker volume inspect "$MINIO_VOLUME" >/dev/null 2>&1; then
     " || echo "⚠️ Could not fix MinIO volume permissions"
 fi
 
-# Also fix local data directory recursively
+# Also fix local data directory using Docker (works without sudo)
 if [ -d "data" ]; then
-    echo "📁 Fixing local data directory permissions..."
-    sudo find data -type d -exec chmod 755 {} \; 2>/dev/null || echo "⚠️ Could not fix local data directory permissions (may need sudo)"
-    sudo find data -type f -exec chmod 644 {} \; 2>/dev/null || echo "⚠️ Could not fix local data file permissions"
-    sudo chown -R 1000:1000 data/ 2>/dev/null || echo "⚠️ Could not set local data directory ownership"
+    echo "📁 Fixing local data directory permissions using Docker..."
+    docker run --rm -v "$(pwd)/data:/fix-data" alpine sh -c "
+        find /fix-data -type d -exec chmod 755 {} \; 2>/dev/null || true
+        find /fix-data -type f -exec chmod 644 {} \; 2>/dev/null || true  
+        chown -R 1000:1000 /fix-data 2>/dev/null || true
+    " && echo "✅ Local data directory permissions fixed" || echo "⚠️ Could not fix local data permissions"
 fi
 
 # Wait for services to be ready
