@@ -417,7 +417,9 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
             <p 
               className="mb-8 animate-fade-in max-w-2xl"
               style={{ 
-                fontFamily: settings.tagline_font_family || 'Roboto',
+                fontFamily: settings.tagline_font_family === 'site' 
+                  ? (settings.content_font_family || 'Roboto')
+                  : (settings.tagline_font_family || 'Roboto'),
                 fontSize: `${settings.tagline_font_size || 20}px`,
                 color: settings.tagline_color || '#ffffff',
                 textAlign: settings.tagline_position || 'center',
