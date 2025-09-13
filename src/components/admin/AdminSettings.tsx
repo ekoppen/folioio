@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { Upload, Type, Palette, Save } from 'lucide-react';
 import { FontSelector } from './FontSelector';
 
@@ -168,7 +168,8 @@ export const AdminSettings = () => {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('site_settings')
         .select('*')
         .order('updated_at', { ascending: false })
@@ -200,12 +201,49 @@ export const AdminSettings = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Ensure we have an id to update the existing record
-      const settingsToSave = settings.id ? settings : { ...settings, id: settings.id };
+      const backend = getBackendAdapter();
       
-      const { data, error } = await supabase
+      if (!settings.id) {
+        // If no id, get the existing record id first
+        const { data: existingData } = await backend
+          .from('site_settings')
+          .select('id')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (existingData) {
+          settings.id = existingData.id;
+        }
+      }
+      
+      // Filter settings to only include columns that exist in the database
+      const validColumns = [
+        'id', 'site_title', 'site_tagline', 'logo_url', 'primary_color', 'secondary_color', 'accent_color',
+        'custom_font_family', 'custom_font_url', 'contact_email', 'contact_phone', 'contact_address',
+        'social_instagram', 'social_facebook', 'social_linkedin', 'title_font_family', 'title_font_url',
+        'content_font_family', 'content_font_url', 'slideshow_show_arrows', 'slideshow_show_dots',
+        'slideshow_interval', 'slideshow_transition', 'slideshow_info_card_enabled', 'slideshow_info_card_position',
+        'slideshow_info_card_opacity', 'slideshow_info_card_radius', 'slideshow_info_card_text_size',
+        'home_show_buttons', 'home_show_title_overlay', 'portfolio_enabled', 'portfolio_title', 'portfolio_description',
+        'logo_position', 'logo_height', 'logo_margin_top', 'logo_margin_left', 'logo_shadow',
+        'header_transparent', 'header_blur', 'header_background_opacity', 'show_site_title', 'footer_enabled',
+        'footer_height', 'footer_text', 'footer_color', 'footer_background_color', 'footer_font_family',
+        'footer_font_size', 'footer_text_align', 'footer_opacity', 'footer_blur', 'footer_hover_opacity',
+        'footer_overlay', 'openai_api_key', 'default_language', 'nav_title_visible', 'nav_title_font_family',
+        'nav_title_font_url', 'nav_title_font_size', 'nav_title_color', 'nav_title_margin_top', 'nav_title_margin_left',
+        'nav_tagline_visible', 'nav_tagline_font_family', 'nav_tagline_font_url', 'nav_tagline_font_size',
+        'nav_tagline_color', 'nav_tagline_margin_top', 'nav_tagline_margin_left', 'nav_text_shadow',
+        'show_logo', 'nav_logo_visible', 'header_background_color'
+      ];
+      
+      const filteredSettings = Object.fromEntries(
+        Object.entries(settings).filter(([key]) => validColumns.includes(key))
+      );
+      
+      const { data, error } = await backend
         .from('site_settings')
-        .upsert(settingsToSave, { onConflict: 'id' })
+        .upsert(filteredSettings, { onConflict: 'id' })
         .select()
         .single();
 
@@ -241,16 +279,17 @@ export const AdminSettings = () => {
 
     setUploading(true);
     try {
+      const backend = getBackendAdapter();
       const fileExt = file.name.split('.').pop();
       const fileName = `logo-${Date.now()}.${fileExt}`;
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await backend.storage
         .from('logos')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = backend.storage
         .from('logos')
         .getPublicUrl(fileName);
 
@@ -278,16 +317,17 @@ export const AdminSettings = () => {
 
     setUploadingFont(type);
     try {
+      const backend = getBackendAdapter();
       const fileExt = file.name.split('.').pop();
       const fileName = `${type}-font-${Date.now()}.${fileExt}`;
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await backend.storage
         .from('custom-fonts')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = backend.storage
         .from('custom-fonts')
         .getPublicUrl(fileName);
 

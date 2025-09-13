@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import SlideshowInfoCard from './SlideshowInfoCard';
 import ProtectedImage from './ProtectedImage';
 import heroBackground from '@/assets/hero-background.jpg';
@@ -184,9 +184,14 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    fetchHomePhotos();
-    fetchSettings();
-    fetchCustomSections();
+    console.log('Hero: useEffect starting...');
+    try {
+      fetchHomePhotos();
+      fetchSettings();
+      fetchCustomSections();
+    } catch (error) {
+      console.error('Hero: useEffect error:', error);
+    }
   }, []);
 
   const fetchCustomSections = async () => {
@@ -206,7 +211,8 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
   const fetchHomePhotos = async () => {
     try {
       // Get the home album
-      const { data: homeAlbum, error: albumError } = await supabase
+      const backend = getBackendAdapter();
+      const { data: homeAlbum, error: albumError } = await backend
         .from('albums')
         .select('id')
         .eq('slug', 'home')
@@ -219,7 +225,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
       }
 
       // Get photos from home album
-      const { data: photos, error: photosError } = await supabase
+      const { data: photos, error: photosError } = await backend
         .from('photos')
         .select('*')
         .eq('album_id', homeAlbum.id)
@@ -238,16 +244,35 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
+      console.log('Hero: Starting to fetch settings...');
+      console.log('Hero: Backend config:', {
+        backendType: import.meta.env.VITE_BACKEND_TYPE,
+        localApiUrl: import.meta.env.VITE_LOCAL_API_URL
+      });
+      const backend = getBackendAdapter();
+      console.log('Hero: Backend adapter:', backend);
+      const { data, error } = await backend
         .from('site_settings')
-        .select('site_title, site_tagline, home_show_title_overlay, home_show_buttons, accent_color, footer_background_color, footer_opacity, logo_margin_left, content_font_family, title_font_family, header_title, header_subtitle, header_description, header_font_family, title_visible, title_font_family, title_font_size, title_color, title_position, tagline_visible, tagline_font_family, tagline_font_size, tagline_color, tagline_position, slideshow_interval, slideshow_transition, slideshow_info_card_enabled, slideshow_info_card_radius, slideshow_info_card_opacity, slideshow_info_card_position, slideshow_info_card_text_size, slideshow_show_arrows, slideshow_show_dots')
+        .select('site_title, site_tagline, home_show_title_overlay, home_show_buttons, accent_color, footer_background_color, logo_margin_left, content_font_family, title_font_family, slideshow_interval, slideshow_transition, slideshow_info_card_enabled, slideshow_info_card_radius, slideshow_info_card_opacity, slideshow_info_card_position, slideshow_info_card_text_size, slideshow_show_arrows, slideshow_show_dots')
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      console.log('Hero: Database query result:', { data, error });
+      console.log('Hero: Raw response data:', data);
+      console.log('Hero: Error details:', error);
+      if (error) {
+        console.error('Hero: Query failed:', error);
+        throw error;
+      }
       
       if (data) {
+        console.log('Hero loaded settings:', {
+          slideshow_transition: data.slideshow_transition,
+          slideshow_interval: data.slideshow_interval,
+          slideshow_show_arrows: data.slideshow_show_arrows,
+          slideshow_show_dots: data.slideshow_show_dots
+        });
         
         setSettings({
           site_title: data.site_title || 'Creatieve Portfolio',
@@ -256,23 +281,9 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
           home_show_buttons: data.home_show_buttons ?? true,
           accent_color: data.accent_color,
           footer_background_color: data.footer_background_color || '#2D3748',
-          footer_opacity: data.footer_opacity || 0.8,
           logo_margin_left: data.logo_margin_left || 0,
           content_font_family: data.content_font_family,
           title_font_family: data.title_font_family,
-          header_title: data.header_title,
-          header_subtitle: data.header_subtitle,
-          header_description: data.header_description,
-          header_font_family: data.header_font_family || 'site',
-          title_visible: data.title_visible ?? true,
-          title_font_size: data.title_font_size || 56,
-          title_color: data.title_color || '#ffffff',
-          title_position: data.title_position || 'center',
-          tagline_visible: data.tagline_visible ?? true,
-          tagline_font_family: data.tagline_font_family || 'Roboto',
-          tagline_font_size: data.tagline_font_size || 20,
-          tagline_color: data.tagline_color || '#ffffff',
-          tagline_position: data.tagline_position || 'center',
           slideshow_interval: data.slideshow_interval || 6000,
           slideshow_transition: data.slideshow_transition || 'fade',
           slideshow_info_card_enabled: data.slideshow_info_card_enabled ?? true,
@@ -285,7 +296,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
         });
       }
     } catch (error) {
-      console.error('Error fetching settings:', error);
+      console.error('Hero: Error fetching settings:', error);
     }
   };
 
@@ -326,12 +337,21 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
       <div className="absolute inset-0 z-0">
         {photosToShow.length > 0 ? (
           photosToShow.map((photo, index) => {
+            if (index === 0) { // Only log for first photo to avoid spam
+              console.log('Rendering transition:', {
+                transition: settings?.slideshow_transition,
+                isSlide: settings?.slideshow_transition === 'slide',
+                currentSlide,
+                interval: settings?.slideshow_interval
+              });
+            }
             
-            const transitionClass = settings?.slideshow_transition === 'slide' 
+            const transitionType = settings?.slideshow_transition || 'fade';
+            const transitionClass = transitionType === 'slide' 
               ? 'transform transition-transform duration-1000' 
               : 'transition-opacity duration-1000';
             
-            const activeClass = settings?.slideshow_transition === 'slide'
+            const activeClass = transitionType === 'slide'
               ? (index === currentSlide ? 'translate-x-0' : index < currentSlide ? '-translate-x-full' : 'translate-x-full')
               : (index === currentSlide ? 'opacity-100' : 'opacity-0');
               
@@ -466,7 +486,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
       )}
       
       {/* Navigation Arrows - only show if there are multiple photos */}
-      {photosToShow.length > 1 && settings?.slideshow_show_arrows === true && (
+      {photosToShow.length > 1 && (settings?.slideshow_show_arrows === true || settings?.slideshow_show_arrows === undefined) && (
         <>
           <Button
             variant="ghost"
@@ -488,7 +508,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
       )}
 
       {/* Slide Indicators */}
-      {photosToShow.length > 1 && settings?.slideshow_show_dots === true && (
+      {photosToShow.length > 1 && (settings?.slideshow_show_dots === true || settings?.slideshow_show_dots === undefined) && (
         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 flex gap-2">
           {photosToShow.map((_, index) => (
             <button

@@ -177,12 +177,17 @@ class LocalQueryBuilder implements QueryBuilder {
       payload.options = this.upsertOptions;
     }
 
+    const token = await this.adapter.getToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await fetch(`${this.adapter.config.apiUrl}/database`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await this.adapter.getToken()}`
-      },
+      headers,
       body: JSON.stringify(payload)
     });
 

@@ -28,6 +28,14 @@ export function getBackendConfig(): BackendConfig {
   const localApiUrl = import.meta.env.VITE_LOCAL_API_URL;
   const backendType = import.meta.env.VITE_BACKEND_TYPE;
   
+  console.log('🔍 Backend detection:', {
+    forceLocal,
+    globalApiUrl,
+    localApiUrl,
+    backendType,
+    allEnvVars: import.meta.env
+  });
+  
   if (forceLocal || backendType === 'local' || localApiUrl) {
     // For local backend, always use /api relative path
     // This way nginx can proxy it properly
