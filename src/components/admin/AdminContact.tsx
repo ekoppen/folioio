@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getBackendAdapter } from '@/config/backend-config';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, Phone, MapPin, MessageSquare, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Mail, Phone, MapPin, MessageSquare, Eye, EyeOff, Send } from 'lucide-react';
 
 interface ContactSettings {
   contact_email: string;
@@ -54,6 +54,7 @@ const AdminContact = () => {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [testing, setTesting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -188,6 +189,55 @@ const AdminContact = () => {
       });
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const sendTestEmail = async () => {
+    setTesting(true);
+    try {
+      // First save current settings to ensure they're applied
+      await updateSettings();
+      
+      // Send test email via contact form endpoint
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: 'Email Test',
+          email: settings.notification_email || settings.contact_email,
+          subject: 'Email Configuration Test',
+          message: `This is a test email to verify your email configuration is working correctly.
+
+Email Service: ${settings.email_service_type || 'gmail'}
+Contact Email: ${settings.contact_email}
+Notification Email: ${settings.notification_email || 'Not set'}
+
+If you receive this email, your email service is configured properly!
+
+Sent from your portfolio admin panel.`
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Test email verzonden! ✅",
+          description: `Controleer je inbox: ${settings.notification_email || settings.contact_email}`,
+        });
+      } else {
+        const errorData = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorData}`);
+      }
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      toast({
+        title: "Test email mislukt ❌",
+        description: "Controleer je email instellingen en probeer opnieuw.",
+        variant: "destructive",
+      });
+    } finally {
+      setTesting(false);
     }
   };
 
@@ -404,10 +454,24 @@ const AdminContact = () => {
             </div>
           )}
 
-          <Button onClick={updateSettings} disabled={updating}>
-            {updating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Instellingen Opslaan
-          </Button>
+          <div className="flex gap-3">
+            <Button onClick={updateSettings} disabled={updating}>
+              {updating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Instellingen Opslaan
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              onClick={sendTestEmail} 
+              disabled={testing || !settings.email_service_type || 
+                       (settings.email_service_type === 'gmail' && (!settings.gmail_user || !settings.gmail_app_password)) ||
+                       (settings.email_service_type === 'resend' && !settings.resend_api_key)}
+            >
+              {testing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {!testing && <Send className="w-4 h-4 mr-2" />}
+              Test Email
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
