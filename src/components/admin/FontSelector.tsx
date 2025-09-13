@@ -15,6 +15,8 @@ interface FontSelectorProps {
   value?: string;
   onFontChange: (fontFamily: string, fontUrl?: string) => void;
   placeholder?: string;
+  allowSiteFont?: boolean;
+  siteFont?: string;
 }
 
 const GOOGLE_FONTS = [
@@ -23,7 +25,7 @@ const GOOGLE_FONTS = [
   'Ubuntu', 'Roboto Slab', 'Crimson Text', 'Work Sans', 'Fira Sans', 'Libre Baskerville'
 ];
 
-export const FontSelector = ({ label, value, onFontChange, placeholder }: FontSelectorProps) => {
+export const FontSelector = ({ label, value, onFontChange, placeholder, allowSiteFont = false, siteFont }: FontSelectorProps) => {
   const [fonts, setFonts] = useState<Font[]>([]);
   const [loadedFonts, setLoadedFonts] = useState<Set<string>>(new Set());
 
@@ -118,6 +120,11 @@ export const FontSelector = ({ label, value, onFontChange, placeholder }: FontSe
   };
 
   const handleFontSelection = (fontName: string) => {
+    if (fontName === 'site') {
+      onFontChange('site', '');
+      return;
+    }
+    
     const selectedFont = fonts.find(f => f.name === fontName);
     if (selectedFont) {
       loadFont(selectedFont);
@@ -145,6 +152,19 @@ export const FontSelector = ({ label, value, onFontChange, placeholder }: FontSe
           <SelectValue placeholder={placeholder || 'Kies een font'} />
         </SelectTrigger>
         <SelectContent className="max-h-80">
+          {/* Site Font Option */}
+          {allowSiteFont && (
+            <>
+              <SelectItem value="site">
+                <div className="flex items-center justify-between w-full">
+                  <span>Site Font ({siteFont || 'Default'})</span>
+                  <span className="text-xs text-muted-foreground ml-2">🏠</span>
+                </div>
+              </SelectItem>
+              <div className="border-b my-1"></div>
+            </>
+          )}
+          
           {/* Google Fonts Section */}
           <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b">
             🌐 Google Fonts

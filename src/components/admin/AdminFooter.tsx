@@ -276,11 +276,10 @@ const AdminFooter = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Lettertype</Label>
               <FontSelector
+                label="Lettertype"
                 value={settings.footer_font_family}
-                onChange={(value) => updateSetting('footer_font_family', value)}
-                label=""
+                onFontChange={(fontFamily, fontUrl) => updateSetting('footer_font_family', fontFamily)}
                 allowSiteFont={true}
                 siteFont={siteSettings.content_font_family}
               />
