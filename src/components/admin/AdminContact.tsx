@@ -83,6 +83,11 @@ const AdminContact = () => {
           auto_reply_subject: data.auto_reply_subject || 'Bedankt voor je bericht',
           auto_reply_message: data.auto_reply_message || 'Bedankt voor je bericht! We nemen zo snel mogelijk contact met je op.',
           notification_email: data.notification_email || '',
+          // Email service settings
+          email_service_type: data.email_service_type || 'gmail',
+          gmail_user: data.gmail_user || '',
+          gmail_app_password: data.gmail_app_password || '',
+          resend_api_key: data.resend_api_key || ''
         });
       }
     } catch (error) {
@@ -137,6 +142,11 @@ const AdminContact = () => {
             auto_reply_subject: settings.auto_reply_subject,
             auto_reply_message: settings.auto_reply_message,
             notification_email: settings.notification_email,
+            // Email service settings
+            email_service_type: settings.email_service_type,
+            gmail_user: settings.gmail_user,
+            gmail_app_password: settings.gmail_app_password,
+            resend_api_key: settings.resend_api_key,
             updated_at: new Date().toISOString()
           })
           .eq('id', existing.id);
@@ -154,7 +164,12 @@ const AdminContact = () => {
             auto_reply_enabled: settings.auto_reply_enabled,
             auto_reply_subject: settings.auto_reply_subject,
             auto_reply_message: settings.auto_reply_message,
-            notification_email: settings.notification_email
+            notification_email: settings.notification_email,
+            // Email service settings
+            email_service_type: settings.email_service_type,
+            gmail_user: settings.gmail_user,
+            gmail_app_password: settings.gmail_app_password,
+            resend_api_key: settings.resend_api_key
           });
 
         if (error) throw error;
