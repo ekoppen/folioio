@@ -787,30 +787,19 @@ export const AdminSettings = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Titel Font</Label>
-                <Select 
-                  value={settings.title_font_family || 'Playfair Display'} 
-                  onValueChange={(value) => setSettings({ ...settings, title_font_family: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer een font voor de titel" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Playfair Display">Playfair Display</SelectItem>
-                    <SelectItem value="Roboto">Roboto</SelectItem>
-                    <SelectItem value="Montserrat">Montserrat</SelectItem>
-                    <SelectItem value="Raleway">Raleway</SelectItem>
-                    <SelectItem value="Lora">Lora</SelectItem>
-                    <SelectItem value="Open Sans">Open Sans</SelectItem>
-                    <SelectItem value="Poppins">Poppins</SelectItem>
-                    <SelectItem value="Inter">Inter</SelectItem>
-                    <SelectItem value="Merriweather">Merriweather</SelectItem>
-                    <SelectItem value="Dancing Script">Dancing Script</SelectItem>
-                    <SelectItem value="Bebas Neue">Bebas Neue</SelectItem>
-                    <SelectItem value="Oswald">Oswald</SelectItem>
-                    <SelectItem value="Source Sans Pro">Source Sans Pro</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FontSelector
+                  label="Titel Font"
+                  value={settings.title_font_family || 'Playfair Display'}
+                  onFontChange={(fontFamily, fontUrl) => {
+                    setSettings({ 
+                      ...settings, 
+                      title_font_family: fontFamily
+                    });
+                  }}
+                  placeholder="Selecteer een font voor de titel"
+                  allowSiteFont={true}
+                  siteFont={settings.content_font_family || 'Roboto'}
+                />
               </div>
 
               <div className="space-y-2">
@@ -873,30 +862,19 @@ export const AdminSettings = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Tagline Font</Label>
-                <Select 
-                  value={settings.tagline_font_family || 'Roboto'} 
-                  onValueChange={(value) => setSettings({ ...settings, tagline_font_family: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer een font voor de tagline" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Playfair Display">Playfair Display</SelectItem>
-                    <SelectItem value="Roboto">Roboto</SelectItem>
-                    <SelectItem value="Montserrat">Montserrat</SelectItem>
-                    <SelectItem value="Raleway">Raleway</SelectItem>
-                    <SelectItem value="Lora">Lora</SelectItem>
-                    <SelectItem value="Open Sans">Open Sans</SelectItem>
-                    <SelectItem value="Poppins">Poppins</SelectItem>
-                    <SelectItem value="Inter">Inter</SelectItem>
-                    <SelectItem value="Merriweather">Merriweather</SelectItem>
-                    <SelectItem value="Dancing Script">Dancing Script</SelectItem>
-                    <SelectItem value="Bebas Neue">Bebas Neue</SelectItem>
-                    <SelectItem value="Oswald">Oswald</SelectItem>
-                    <SelectItem value="Source Sans Pro">Source Sans Pro</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FontSelector
+                  label="Tagline Font"
+                  value={settings.tagline_font_family || 'Roboto'}
+                  onFontChange={(fontFamily, fontUrl) => {
+                    setSettings({ 
+                      ...settings, 
+                      tagline_font_family: fontFamily
+                    });
+                  }}
+                  placeholder="Selecteer een font voor de tagline"
+                  allowSiteFont={true}
+                  siteFont={settings.content_font_family || 'Roboto'}
+                />
               </div>
 
               <div className="space-y-2">
