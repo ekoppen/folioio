@@ -177,7 +177,17 @@ const PortfolioGallery = ({ onAlbumSelect }: PortfolioGalleryProps) => {
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />
                       
-                      {/* Overlay */}
+                      {/* Gradient overlay for text readability */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30"></div>
+                      
+                      {/* Album title overlay - left top */}
+                      <div className="absolute top-4 left-4 text-white">
+                        <h3 className="text-lg font-bold drop-shadow-lg font-title leading-tight">
+                          {t(`albums.name.${album.id}`, album.name)}
+                        </h3>
+                      </div>
+                      
+                      {/* Hover overlay */}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                         <div className="flex items-center gap-2 text-white font-medium">
                           <Eye size={20} />
@@ -192,15 +202,10 @@ const PortfolioGallery = ({ onAlbumSelect }: PortfolioGalleryProps) => {
                     </div>
 
                     {/* Gallery Details */}
-                    <div className="p-6 flex-1 flex flex-col justify-between">
-                      <div>
-                        <h3 className="text-xl font-bold mb-3 transition-colors font-title">
-                          {t(`albums.name.${album.id}`, album.name)}
-                        </h3>
-                        <p className="text-muted-foreground font-content">
-                          {t(`albums.description.${album.id}`, album.description || t('portfolio.default_description', 'Bekijk de foto\'s in dit album'))}
-                        </p>
-                      </div>
+                    <div className="p-6 flex-1 flex flex-col justify-center">
+                      <p className="text-muted-foreground font-content text-center leading-relaxed">
+                        {t(`albums.description.${album.id}`, album.description || t('portfolio.default_description', 'Bekijk de foto\'s in dit album'))}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
