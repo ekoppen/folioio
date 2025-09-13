@@ -200,9 +200,12 @@ export const AdminSettings = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
+      // Ensure we have an id to update the existing record
+      const settingsToSave = settings.id ? settings : { ...settings, id: settings.id };
+      
       const { data, error } = await supabase
         .from('site_settings')
-        .upsert(settings)
+        .upsert(settingsToSave, { onConflict: 'id' })
         .select()
         .single();
 
