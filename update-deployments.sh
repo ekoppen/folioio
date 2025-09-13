@@ -94,31 +94,32 @@ update_deployment() {
     cp docker-compose.simple.yml "$deploy_dir/docker-compose.yml"
     cp nginx-simple.conf "$deploy_dir/"
     
-    # Copy ALL migrations automatically
-    mkdir -p "$deploy_dir/postgres-config"
-    MIGRATIONS_COPIED=0
-    NEW_MIGRATIONS=0
+    # Skip postgres-config migrations - using application-level migration system
+    # The local-backend has its own migrator.js that handles migrations properly
+    echo "  📦 Migrations handled by application migration system (migrator.js)"
+    echo "  ✅ Database migrations will be applied automatically on container start"
     
-    if [ -d "local-backend/src/migrations" ]; then
-        for migration in local-backend/src/migrations/*.sql; do
-            if [ -f "$migration" ]; then
-                migration_name=$(basename "$migration")
-                if [ ! -f "$deploy_dir/postgres-config/$migration_name" ]; then
-                    echo "  🆕 New migration detected: $migration_name"
-                    NEW_MIGRATIONS=$((NEW_MIGRATIONS + 1))
-                fi
-                cp "$migration" "$deploy_dir/postgres-config/"
-                MIGRATIONS_COPIED=$((MIGRATIONS_COPIED + 1))
-            fi
-        done
-        
-        if [ $NEW_MIGRATIONS -gt 0 ]; then
-            echo "  🔄 $NEW_MIGRATIONS new migration(s) will be applied on restart"
+    # Clean up any existing postgres-config migrations to prevent conflicts
+    if [ -d "$deploy_dir/postgres-config" ]; then
+        # Remove any .sql files that might cause conflicts
+        OLD_MIGRATIONS=$(find "$deploy_dir/postgres-config" -name "*.sql" -type f | wc -l)
+        if [ $OLD_MIGRATIONS -gt 0 ]; then
+            echo "  🧹 Removing $OLD_MIGRATIONS old postgres-config migration(s) to prevent conflicts"
+            rm -f "$deploy_dir/postgres-config"/*.sql
         fi
-        echo "  📦 Total migrations available: $MIGRATIONS_COPIED"
-    else
-        echo "  ⚠️  No migrations directory found"
     fi
+    
+    # Ensure postgres-config directory exists but keep it empty for safety
+    mkdir -p "$deploy_dir/postgres-config"
+    
+    # Add migration system info file
+    cat > "$deploy_dir/postgres-config/.migration_system_note" << 'EOF'
+-- Migration System Info
+-- This deployment uses application-level migrations via migrator.js
+-- Do not add migration files here to prevent data loss and conflicts
+-- All migrations are handled by the Node.js backend on startup
+EOF
+    echo "  ℹ️  Using application-level migration system only"
     
     # Go to deployment directory
     cd "$deploy_dir"
