@@ -202,8 +202,8 @@ const PortfolioGallery = ({ onAlbumSelect }: PortfolioGalleryProps) => {
                     </div>
 
                     {/* Gallery Details */}
-                    <div className="p-6 flex-1 flex flex-col justify-center">
-                      <p className="text-muted-foreground font-content text-center leading-relaxed">
+                    <div className="p-6 flex-1 flex flex-col justify-start">
+                      <p className="text-muted-foreground font-content text-left leading-relaxed">
                         {t(`albums.description.${album.id}`, album.description || t('portfolio.default_description', 'Bekijk de foto\'s in dit album'))}
                       </p>
                     </div>
