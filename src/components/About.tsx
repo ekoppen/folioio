@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ContactModal } from '@/components/ContactModal';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { Palette, Camera, Laptop, Heart, Mail } from 'lucide-react';
 import { useAccentColor } from '@/hooks/useAccentColor';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -77,7 +77,8 @@ const About = () => {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('about_settings')
         .select('*')
         .order('updated_at', { ascending: false })

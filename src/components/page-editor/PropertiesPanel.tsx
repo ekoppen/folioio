@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Trash2, AlignLeft, AlignCenter, AlignRight, Palette, Move, AlignHorizontalDistributeStart, AlignVerticalDistributeStart, Maximize, Play, Settings } from 'lucide-react';
 import { PageElement, DimensionValue, Unit, ElementAlignment } from './types';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 
 interface PropertiesPanelProps {
   element: PageElement;
@@ -33,7 +33,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
   const fetchAlbums = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('albums')
         .select('id, name, slug')
         .eq('is_visible', true)

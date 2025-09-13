@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 
 // Helper function to convert hex to HSL
 const hexToHsl = (hex: string): string => {
@@ -38,7 +38,8 @@ export const useAccentColor = () => {
   useEffect(() => {
     const fetchAccentColor = async () => {
       try {
-        const { data, error } = await supabase
+        const backend = getBackendAdapter();
+        const { data, error } = await backend
           .from('site_settings')
           .select('accent_color')
           .order('updated_at', { ascending: false })

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 
 interface SlideItem {
   id: string;
@@ -22,7 +22,8 @@ const Slideshow = () => {
 
   const fetchSlides = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('slideshow')
         .select('*')
         .eq('is_active', true)

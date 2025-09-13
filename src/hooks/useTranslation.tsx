@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 
 interface Translation {
   [key: string]: string;
@@ -56,7 +56,8 @@ export const TranslationProvider = ({ children }: TranslationProviderProps) => {
 
   const loadDefaultLanguage = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('site_settings')
         .select('default_language')
         .limit(1)
@@ -80,7 +81,8 @@ export const TranslationProvider = ({ children }: TranslationProviderProps) => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('translations')
         .select('translation_key, translation_value')
         .eq('language_code', languageCode);

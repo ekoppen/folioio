@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 
 interface Font {
   name: string;
@@ -34,7 +34,8 @@ export const FontSelector = ({ label, value, onFontChange, placeholder }: FontSe
   const fetchAvailableFonts = async () => {
     try {
       // Get all custom fonts from database
-      const { data: settingsData, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data: settingsData, error } = await backend
         .from('site_settings')
         .select('title_font_family, title_font_url, content_font_family, content_font_url')
         .order('updated_at', { ascending: false })

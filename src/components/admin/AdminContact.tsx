@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Phone, MapPin, MessageSquare, Eye, EyeOff } from 'lucide-react';
 
@@ -53,7 +53,8 @@ const AdminContact = () => {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('contact_settings')
         .select('*')
         .maybeSingle();
@@ -86,7 +87,8 @@ const AdminContact = () => {
 
   const fetchMessages = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('contact_messages')
         .select('*')
         .order('created_at', { ascending: false });
@@ -101,7 +103,8 @@ const AdminContact = () => {
   const updateSettings = async () => {
     setUpdating(true);
     try {
-      const { error } = await supabase
+      const backend = getBackendAdapter();
+      const { error } = await backend
         .from('contact_settings')
         .upsert(settings);
 
@@ -125,7 +128,8 @@ const AdminContact = () => {
 
   const markAsRead = async (messageId: string, isRead: boolean) => {
     try {
-      const { error } = await supabase
+      const backend = getBackendAdapter();
+      const { error } = await backend
         .from('contact_messages')
         .update({ is_read: isRead })
         .eq('id', messageId);

@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Palette, Camera, Laptop, Heart, Monitor, Smartphone, User, Save, Upload, X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { useToast } from '@/hooks/use-toast';
 
 interface AboutSettings {
@@ -74,7 +74,8 @@ const AdminAbout = () => {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('about_settings')
         .select('*')
         .order('updated_at', { ascending: false })
@@ -128,7 +129,8 @@ const AdminAbout = () => {
         upsertData.id = settings.id;
       }
 
-      const { error } = await supabase
+      const backend = getBackendAdapter();
+      const { error } = await backend
         .from('about_settings')
         .upsert(upsertData);
 
@@ -225,15 +227,16 @@ const AdminAbout = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `profile-photo-${Date.now()}.${fileExt}`;
 
-      // Upload to Supabase storage
-      const { data, error } = await supabase.storage
+      // Upload to backend storage
+      const backend = getBackendAdapter();
+      const { data, error } = await backend.storage
         .from('gallery-images')
         .upload(fileName, file);
 
       if (error) throw error;
 
       // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = backend.storage
         .from('gallery-images')
         .getPublicUrl(fileName);
 

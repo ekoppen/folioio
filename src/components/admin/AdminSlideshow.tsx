@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { Plus, Upload, Edit2, Trash2, GripVertical } from 'lucide-react';
 
 interface SlideItem {
@@ -39,7 +39,8 @@ export const AdminSlideshow = () => {
 
   const fetchSlides = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('slideshow')
         .select('*')
         .order('sort_order', { ascending: true });
@@ -62,13 +63,14 @@ export const AdminSlideshow = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `slide-${Date.now()}.${fileExt}`;
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const backend = getBackendAdapter();
+      const { data: uploadData, error: uploadError } = await backend.storage
         .from('slideshow-images')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = backend.storage
         .from('slideshow-images')
         .getPublicUrl(fileName);
 
@@ -108,7 +110,8 @@ export const AdminSlideshow = () => {
     try {
       const maxOrder = Math.max(...slides.map(s => s.sort_order), 0);
       
-      const { error } = await supabase
+      const backend = getBackendAdapter();
+      const { error } = await backend
         .from('slideshow')
         .insert({
           ...newSlide,
@@ -148,7 +151,8 @@ export const AdminSlideshow = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const backend = getBackendAdapter();
+      const { error } = await backend
         .from('slideshow')
         .update({
           title: editingSlide.title,
@@ -185,7 +189,8 @@ export const AdminSlideshow = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const backend = getBackendAdapter();
+      const { error } = await backend
         .from('slideshow')
         .delete()
         .eq('id', id);
@@ -212,7 +217,8 @@ export const AdminSlideshow = () => {
 
   const toggleSlideActive = async (slide: SlideItem) => {
     try {
-      const { error } = await supabase
+      const backend = getBackendAdapter();
+      const { error } = await backend
         .from('slideshow')
         .update({ is_active: !slide.is_active })
         .eq('id', slide.id);

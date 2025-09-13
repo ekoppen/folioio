@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { useToast } from '@/hooks/use-toast';
 import { FontSelector } from './FontSelector';
 
@@ -48,7 +48,8 @@ const AdminFooter = () => {
 
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('site_settings')
         .select(`
           footer_enabled,
@@ -101,7 +102,8 @@ const AdminFooter = () => {
     setLoading(true);
     try {
       // Get or create site settings entry
-      let { data: existingSettings } = await supabase
+      const backend = getBackendAdapter();
+      let { data: existingSettings } = await backend
         .from('site_settings')
         .select('id')
         .limit(1)
@@ -109,7 +111,7 @@ const AdminFooter = () => {
 
       if (existingSettings) {
         // Update existing settings
-        const { error } = await supabase
+        const { error } = await backend
           .from('site_settings')
           .update({
             footer_enabled: settings.footer_enabled,
@@ -127,7 +129,7 @@ const AdminFooter = () => {
         if (error) throw error;
       } else {
         // Create new settings entry
-        const { error } = await supabase
+        const { error } = await backend
           .from('site_settings')
           .insert([{
             footer_enabled: settings.footer_enabled,

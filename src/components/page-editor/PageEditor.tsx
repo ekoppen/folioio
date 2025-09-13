@@ -7,7 +7,7 @@ import { PropertiesPanel } from './PropertiesPanel';
 import { PageElement, DimensionValue, Unit } from './types';
 import { Button } from '@/components/ui/button';
 import { Save, Eye, Undo, Redo, Settings, ArrowLeft, Smartphone, Tablet, Monitor } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -34,7 +34,8 @@ export const PageEditor = ({ pageId, onBack }: PageEditorProps = {}) => {
       
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        const backend = getBackendAdapter();
+        const { data, error } = await backend
           .from('page_builder_elements')
           .select('*')
           .eq('page_id', pageId)
@@ -196,8 +197,9 @@ export const PageEditor = ({ pageId, onBack }: PageEditorProps = {}) => {
 
     setLoading(true);
     try {
+      const backend = getBackendAdapter();
       // First, delete existing elements for this page
-      await supabase
+      await backend
         .from('page_builder_elements')
         .delete()
         .eq('page_id', pageId);
@@ -226,7 +228,7 @@ export const PageEditor = ({ pageId, onBack }: PageEditorProps = {}) => {
       }));
 
       if (elementsToSave.length > 0) {
-        const { error } = await supabase
+        const { error } = await backend
           .from('page_builder_elements')
           .insert(elementsToSave);
 

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface ContactModalProps {
@@ -42,7 +42,8 @@ export const ContactModal = ({ open, onOpenChange }: ContactModalProps) => {
   useEffect(() => {
     const loadContactSettings = async () => {
       try {
-        const { data } = await supabase
+        const backend = getBackendAdapter();
+        const { data } = await backend
           .from('site_settings')
           .select('contact_email, contact_phone, contact_address')
           .order('updated_at', { ascending: false })
@@ -80,7 +81,8 @@ export const ContactModal = ({ open, onOpenChange }: ContactModalProps) => {
     
     try {
       // Save to database
-      const { error } = await supabase
+      const backend = getBackendAdapter();
+      const { error } = await backend
         .from('contact_messages')
         .insert({
           name: formData.name,

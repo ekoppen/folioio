@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 
 interface Photo {
   id: string;
@@ -48,8 +48,9 @@ export const SlideshowElement: React.FC<SlideshowElementProps> = ({ settings }) 
 
   const fetchPhotos = async () => {
     try {
+      const backend = getBackendAdapter();
       // Get the album
-      const { data: album, error: albumError } = await supabase
+      const { data: album, error: albumError } = await backend
         .from('albums')
         .select('id')
         .eq('slug', slideshowAlbum)
@@ -62,7 +63,7 @@ export const SlideshowElement: React.FC<SlideshowElementProps> = ({ settings }) 
       }
 
       // Get photos from album
-      const { data: photosData, error: photosError } = await supabase
+      const { data: photosData, error: photosError } = await backend
         .from('photos')
         .select('*')
         .eq('album_id', album.id)

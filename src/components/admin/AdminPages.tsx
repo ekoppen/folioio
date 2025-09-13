@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { Plus, Edit2, Trash2, ExternalLink, Home } from 'lucide-react';
 
 interface Page {
@@ -40,8 +40,9 @@ export const AdminPages = () => {
   }, []);
 
   const fetchPages = async () => {
+    const backend = getBackendAdapter();
     try {
-      const { data, error } = await supabase
+      const { data, error } = await backend
         .from('pages')
         .select('*')
         .order('created_at', { ascending: false });
@@ -91,8 +92,9 @@ export const AdminPages = () => {
     }
 
     setLoading(true);
+    const backend = getBackendAdapter();
     try {
-      const { error } = await supabase
+      const { error } = await backend
         .from('pages')
         .insert(newPage);
 
@@ -137,8 +139,9 @@ export const AdminPages = () => {
     if (!editingPage) return;
 
     setLoading(true);
+    const backend = getBackendAdapter();
     try {
-      const { error } = await supabase
+      const { error } = await backend
         .from('pages')
         .update({
           title: editingPage.title,
@@ -191,8 +194,9 @@ export const AdminPages = () => {
     if (!confirm('Are you sure you want to delete this page?')) return;
 
     setLoading(true);
+    const backend = getBackendAdapter();
     try {
-      const { error } = await supabase
+      const { error } = await backend
         .from('pages')
         .delete()
         .eq('id', id);
@@ -218,8 +222,9 @@ export const AdminPages = () => {
   };
 
   const togglePagePublished = async (page: Page) => {
+    const backend = getBackendAdapter();
     try {
-      const { error } = await supabase
+      const { error } = await backend
         .from('pages')
         .update({ is_published: !page.is_published })
         .eq('id', page.id);

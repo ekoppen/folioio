@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface FooterSettings {
@@ -44,7 +44,8 @@ const SimplifiedFooter = () => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const { data, error } = await supabase
+        const backend = getBackendAdapter();
+        const { data, error } = await backend
           .from('site_settings')
           .select(`
             footer_enabled,

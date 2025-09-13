@@ -7,7 +7,7 @@ import { PropertiesPanel } from '../page-editor/PropertiesPanel';
 import { PageElement, DimensionValue, Unit } from '../page-editor/types';
 import { Button } from '@/components/ui/button';
 import { Save, Eye, Undo, Redo, Monitor, Tablet, Smartphone } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -26,7 +26,8 @@ export const FooterEditor = () => {
     const loadElements = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        const backend = getBackendAdapter();
+        const { data, error } = await backend
           .from('footer_elements')
           .select('*')
           .order('sort_order');
@@ -178,7 +179,8 @@ export const FooterEditor = () => {
     setLoading(true);
     try {
       // First, delete existing footer elements
-      await supabase
+      const backend = getBackendAdapter();
+      await backend
         .from('footer_elements')
         .delete()
         .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
@@ -207,7 +209,7 @@ export const FooterEditor = () => {
       }));
 
       if (elementsToSave.length > 0) {
-        const { error } = await supabase
+        const { error } = await backend
           .from('footer_elements')
           .insert(elementsToSave);
 

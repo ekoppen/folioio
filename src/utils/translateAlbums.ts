@@ -1,8 +1,9 @@
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 
 export const translateAlbumDescriptions = async () => {
   try {
-    const { data, error } = await supabase.functions.invoke('translate-album-descriptions');
+    const backend = getBackendAdapter();
+    const { data, error } = await backend.functions.invoke('translate-album-descriptions');
     
     if (error) {
       console.error('Error calling translation function:', error);

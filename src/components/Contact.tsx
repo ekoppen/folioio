@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { useToast } from '@/hooks/use-toast';
 import { useAccentColor } from '@/hooks/useAccentColor';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -47,7 +47,8 @@ const Contact = () => {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('contact_settings')
         .select('contact_email, contact_phone, contact_address, form_enabled')
         .maybeSingle();
@@ -87,7 +88,8 @@ const Contact = () => {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.functions.invoke('send-contact-email', {
+      const backend = getBackendAdapter();
+      const { error } = await backend.functions.invoke('send-contact-email', {
         body: {
           name: formData.name,
           email: formData.email,

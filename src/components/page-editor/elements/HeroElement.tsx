@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { useTranslation } from '@/hooks/useTranslation';
 import heroBackground from '@/assets/hero-background.jpg';
 
@@ -33,7 +33,8 @@ export const HeroElement: React.FC<HeroElementProps> = ({ settings }) => {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('site_settings')
         .select('site_title, site_tagline')
         .limit(1)

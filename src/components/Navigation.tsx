@@ -8,7 +8,7 @@ import { User, LogIn, LogOut, Settings, ChevronDown, Menu, X, Mail } from 'lucid
 import { Button } from '@/components/ui/button';
 import { ContactModal } from '@/components/ContactModal';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 
 interface NavigationPage {
   id: string;
@@ -120,7 +120,8 @@ const Navigation = () => {
 
   useEffect(() => {
     const loadPages = async () => {
-      const { data } = await supabase
+      const backend = getBackendAdapter();
+      const { data } = await backend
         .from('page_builder_pages')
         .select('id, name, slug, parent_page_id, menu_order')
         .eq('is_published', true)
@@ -154,7 +155,8 @@ const Navigation = () => {
     };
 
     const loadSettings = async () => {
-      const { data } = await supabase
+      const backend = getBackendAdapter();
+      const { data } = await backend
         .from('site_settings')
         .select('site_title, show_site_title, header_transparent, header_blur, header_background_opacity, logo_url, logo_height, logo_position, logo_margin_top, logo_margin_left, logo_shadow, nav_title_visible, nav_tagline_visible, nav_title_font_family, nav_title_font_url, nav_tagline_font_family, nav_tagline_font_url, nav_title_font_size, nav_tagline_font_size, nav_title_color, nav_tagline_color, nav_title_margin_top, nav_title_margin_left, nav_tagline_margin_top, nav_tagline_margin_left, nav_text_shadow, site_tagline')
         .order('updated_at', { ascending: false })

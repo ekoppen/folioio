@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 
 interface FontSettings {
   title_font_family?: string;
@@ -15,7 +15,8 @@ export const useFonts = () => {
   useEffect(() => {
     const fetchAndApplyFonts = async () => {
       try {
-        const { data, error } = await supabase
+        const backend = getBackendAdapter();
+        const { data, error } = await backend
           .from('site_settings')
           .select('title_font_family, title_font_url, content_font_family, content_font_url')
           .order('updated_at', { ascending: false })

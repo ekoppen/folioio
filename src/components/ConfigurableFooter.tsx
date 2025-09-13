@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { EditableElement } from './page-editor/EditableElement';
 import { PageElement, DimensionValue, Unit } from './page-editor/types';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 
 const ConfigurableFooter = () => {
   const [elements, setElements] = useState<PageElement[]>([]);
@@ -10,7 +10,8 @@ const ConfigurableFooter = () => {
   useEffect(() => {
     const loadFooterElements = async () => {
       try {
-        const { data, error } = await supabase
+        const backend = getBackendAdapter();
+        const { data, error } = await backend
           .from('footer_elements')
           .select('*')
           .order('sort_order');
@@ -80,7 +81,8 @@ const ConfigurableFooter = () => {
     };
 
     const loadSettings = async () => {
-      const { data } = await supabase
+      const backend = getBackendAdapter();
+      const { data } = await backend
         .from('site_settings')
         .select('footer_enabled')
         .limit(1)

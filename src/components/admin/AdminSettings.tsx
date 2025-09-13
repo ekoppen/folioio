@@ -203,20 +203,18 @@ export const AdminSettings = () => {
     try {
       const backend = getBackendAdapter();
       
-      if (!settings.id) {
-        // If no id, get the existing record id first
-        const { data: existingData } = await backend
-          .from('site_settings')
-          .select('id')
-          .order('updated_at', { ascending: false })
-          .limit(1)
-          .single();
-        
-        if (existingData) {
-          settings.id = existingData.id;
-        }
+      // Get the current database settings first to compare
+      const { data: currentData } = await backend
+        .from('site_settings')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!currentData) {
+        throw new Error('No settings found to update');
       }
-      
+
       // Filter settings to only include columns that exist in the database
       const validColumns = [
         'id', 'site_title', 'site_tagline', 'logo_url', 'primary_color', 'secondary_color', 'accent_color',
@@ -237,18 +235,36 @@ export const AdminSettings = () => {
         'show_logo', 'nav_logo_visible', 'header_background_color'
       ];
       
-      const filteredSettings = Object.fromEntries(
-        Object.entries(settings).filter(([key]) => validColumns.includes(key))
-      );
+      // Only include fields that have actually changed and exist in the database
+      const changedFields: any = { id: currentData.id };
+      
+      for (const [key, value] of Object.entries(settings)) {
+        if (validColumns.includes(key) && key !== 'id') {
+          // Only include if the value has actually changed from what's in the database
+          if (currentData[key] !== value) {
+            changedFields[key] = value;
+          }
+        }
+      }
+      
+      // Only update if there are actually changes
+      if (Object.keys(changedFields).length === 1) {
+        toast({
+          title: "Info",
+          description: "No changes to save"
+        });
+        return;
+      }
       
       const { data, error } = await backend
         .from('site_settings')
-        .upsert(filteredSettings, { onConflict: 'id' })
+        .upsert(changedFields, { onConflict: 'id' })
         .select()
         .single();
 
       if (error) throw error;
 
+      // Update our state with the fresh database data
       setSettings({
         ...data,
         logo_position: (data.logo_position as 'left' | 'center' | 'right') ?? 'left',
@@ -257,9 +273,10 @@ export const AdminSettings = () => {
         logo_margin_left: data.logo_margin_left ?? 0,
         logo_shadow: data.logo_shadow ?? false
       });
+      
       toast({
         title: "Success",
-        description: "Settings saved successfully"
+        description: `Settings saved successfully (${Object.keys(changedFields).length - 1} changes)`
       });
     } catch (error) {
       console.error('Error saving settings:', error);

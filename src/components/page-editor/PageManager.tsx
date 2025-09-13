@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { PageEditor } from './PageEditor';
 import { TemplateLibrary } from './TemplateLibrary';
 import { Plus, Edit, Trash2, Eye, Globe, FileText, Home } from 'lucide-react';
@@ -48,7 +48,8 @@ export const PageManager = () => {
 
   const loadPages = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('page_builder_pages')
         .select('*')
         .order('updated_at', { ascending: false });
@@ -75,7 +76,8 @@ export const PageManager = () => {
     is_homepage?: boolean;
     parent_page_id?: string;
   }) => {
-    const { data: newPage, error } = await supabase
+    const backend = getBackendAdapter();
+    const { data: newPage, error } = await backend
       .from('page_builder_pages')
       .insert([
         {
@@ -97,7 +99,7 @@ export const PageManager = () => {
 
     if (pageData.template_id) {
       // Copy elements from template
-      const { data: templateElements } = await supabase
+      const { data: templateElements } = await backend
         .from('page_builder_elements')
         .select('*')
         .eq('page_id', pageData.template_id);
@@ -118,7 +120,7 @@ export const PageManager = () => {
           sort_order: elem.sort_order,
         }));
 
-        await supabase
+        await backend
           .from('page_builder_elements')
           .insert(elementsToInsert);
       }
@@ -129,7 +131,8 @@ export const PageManager = () => {
 
   const deletePage = async (pageId: string) => {
     try {
-      const { error } = await supabase
+      const backend = getBackendAdapter();
+      const { error } = await backend
         .from('page_builder_pages')
         .delete()
         .eq('id', pageId);
@@ -156,7 +159,8 @@ export const PageManager = () => {
 
   const togglePublished = async (page: Page) => {
     try {
-      const { error } = await supabase
+      const backend = getBackendAdapter();
+      const { error } = await backend
         .from('page_builder_pages')
         .update({ is_published: !page.is_published })
         .eq('id', page.id);
@@ -284,7 +288,7 @@ export const PageManager = () => {
                 sort_order: 0
               }));
 
-              await supabase
+              await backend
                 .from('page_builder_elements')
                 .insert(elementsToInsert);
             }

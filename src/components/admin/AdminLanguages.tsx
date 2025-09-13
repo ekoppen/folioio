@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { Trash2, Plus, Globe, Key, Download, Save } from 'lucide-react';
 
 interface Language {
@@ -39,8 +39,9 @@ const AdminLanguages = () => {
   }, []);
 
   const loadLanguages = async () => {
+    const backend = getBackendAdapter();
     try {
-      const { data, error } = await supabase
+      const { data, error } = await backend
         .from('languages')
         .select('*')
         .order('is_default', { ascending: false });
@@ -58,8 +59,9 @@ const AdminLanguages = () => {
   };
 
   const loadApiKey = async () => {
+    const backend = getBackendAdapter();
     try {
-      const { data, error } = await supabase
+      const { data, error } = await backend
         .from('site_settings')
         .select('openai_api_key')
         .limit(1)
@@ -76,11 +78,12 @@ const AdminLanguages = () => {
 
   const saveApiKey = async () => {
     setIsLoading(true);
+    const backend = getBackendAdapter();
     try {
-      const { error } = await supabase
+      const { error } = await backend
         .from('site_settings')
         .update({ openai_api_key: openaiApiKey })
-        .eq('id', (await supabase.from('site_settings').select('id').limit(1).single()).data?.id);
+        .eq('id', (await backend.from('site_settings').select('id').limit(1).single()).data?.id);
 
       if (error) throw error;
 
@@ -111,8 +114,9 @@ const AdminLanguages = () => {
     }
 
     setIsLoading(true);
+    const backend = getBackendAdapter();
     try {
-      const { error } = await supabase
+      const { error } = await backend
         .from('languages')
         .insert({
           code: newLanguage.code.toLowerCase(),
@@ -143,8 +147,9 @@ const AdminLanguages = () => {
   };
 
   const toggleLanguage = async (id: string, enabled: boolean) => {
+    const backend = getBackendAdapter();
     try {
-      const { error } = await supabase
+      const { error } = await backend
         .from('languages')
         .update({ is_enabled: enabled })
         .eq('id', id);
@@ -162,14 +167,15 @@ const AdminLanguages = () => {
   };
 
   const setDefaultLanguage = async (id: string) => {
+    const backend = getBackendAdapter();
     try {
       // First, remove default from all languages
-      await supabase
+      await backend
         .from('languages')
         .update({ is_default: false });
 
       // Then set the new default
-      const { error } = await supabase
+      const { error } = await backend
         .from('languages')
         .update({ is_default: true })
         .eq('id', id);
@@ -201,15 +207,16 @@ const AdminLanguages = () => {
       return;
     }
 
+    const backend = getBackendAdapter();
     try {
       // Delete translations for this language
-      await supabase
+      await backend
         .from('translations')
         .delete()
         .eq('language_code', code);
 
       // Delete the language
-      const { error } = await supabase
+      const { error } = await backend
         .from('languages')
         .delete()
         .eq('id', id);
@@ -248,8 +255,9 @@ const AdminLanguages = () => {
       isTranslating: true
     }]);
 
+    const backend = getBackendAdapter();
     try {
-      const { error } = await supabase.functions.invoke('translate-content', {
+      const { error } = await backend.functions.invoke('translate-content', {
         body: { 
           targetLanguage: languageCode,
           languageName: languageName

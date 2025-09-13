@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ContactModal } from '@/components/ContactModal';
 import ProtectedImage from '@/components/ProtectedImage';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { 
   Palette, Camera, Laptop, Heart, Mail, Monitor, 
   Smartphone, Globe, Users, Star, Award, 

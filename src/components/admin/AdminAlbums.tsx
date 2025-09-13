@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { Plus, Edit2, Trash2, Upload, Images, Save, X, GripVertical, Folder } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
@@ -64,8 +64,9 @@ export const AdminAlbums = () => {
   }, []);
 
   const fetchAlbums = async () => {
+    const backend = getBackendAdapter();
     try {
-      const { data, error } = await supabase
+      const { data, error } = await backend
         .from('albums')
         .select('*')
         .order('sort_order', { ascending: true });
@@ -83,8 +84,9 @@ export const AdminAlbums = () => {
   };
 
   const fetchPhotos = async (albumId: string) => {
+    const backend = getBackendAdapter();
     try {
-      const { data, error } = await supabase
+      const { data, error } = await backend
         .from('photos')
         .select('*')
         .eq('album_id', albumId)
@@ -129,8 +131,9 @@ export const AdminAlbums = () => {
     }
 
     setLoading(true);
+    const backend = getBackendAdapter();
     try {
-      const { error } = await supabase
+      const { error } = await backend
         .from('albums')
         .insert({
           name: newAlbum.name,
@@ -181,8 +184,9 @@ export const AdminAlbums = () => {
     if (!editingAlbum) return;
 
     setLoading(true);
+    const backend = getBackendAdapter();
     try {
-      const { error } = await supabase
+      const { error } = await backend
         .from('albums')
         .update({
           name: editingAlbum.name,
@@ -238,8 +242,9 @@ export const AdminAlbums = () => {
     if (!confirm(`Are you sure you want to delete "${album.name}"? This will also delete all photos in this album.`)) return;
 
     setLoading(true);
+    const backend = getBackendAdapter();
     try {
-      const { error } = await supabase
+      const { error } = await backend
         .from('albums')
         .delete()
         .eq('id', album.id);
@@ -281,17 +286,18 @@ export const AdminAlbums = () => {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `${selectedAlbum.slug}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
+        const backend = getBackendAdapter();
+        const { error: uploadError } = await backend.storage
           .from('fotos')
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
+        const { data: { publicUrl } } = backend.storage
           .from('fotos')
           .getPublicUrl(filePath);
 
-        const { error: insertError } = await supabase
+        const { error: insertError } = await backend
           .from('photos')
           .insert({
             filename: file.name,
@@ -327,15 +333,16 @@ export const AdminAlbums = () => {
   const handleDeletePhoto = async (photo: Photo) => {
     if (!confirm('Are you sure you want to delete this photo?')) return;
 
+    const backend = getBackendAdapter();
     try {
       // Delete from storage
       const filePath = photo.file_url.split('/fotos/')[1];
-      await supabase.storage
+      await backend.storage
         .from('fotos')
         .remove([filePath]);
 
       // Delete from database
-      const { error } = await supabase
+      const { error } = await backend
         .from('photos')
         .delete()
         .eq('id', photo.id);
@@ -364,8 +371,9 @@ export const AdminAlbums = () => {
   };
 
   const handlePhotoEdit = async (photo: Photo, field: keyof Photo, value: string | boolean) => {
+    const backend = getBackendAdapter();
     try {
-      const { error } = await supabase
+      const { error } = await backend
         .from('photos')
         .update({ [field]: value })
         .eq('id', photo.id);
@@ -405,8 +413,9 @@ export const AdminAlbums = () => {
         sort_order: index
       }));
 
+      const backend = getBackendAdapter();
       for (const update of updates) {
-        await supabase
+        await backend
           .from('photos')
           .update({ sort_order: update.sort_order })
           .eq('id', update.id);

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Eye, ArrowRight } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface Album {
@@ -47,8 +47,9 @@ export const PortfolioGalleryElement: React.FC<PortfolioGalleryElementProps> = (
 
   const fetchAlbums = async () => {
     try {
+      const backend = getBackendAdapter();
       // Fetch visible albums with their photos
-      const { data: albumsData, error: albumsError } = await supabase
+      const { data: albumsData, error: albumsError } = await backend
         .from('albums')
         .select('*')
         .eq('is_visible', true)
@@ -59,7 +60,7 @@ export const PortfolioGalleryElement: React.FC<PortfolioGalleryElementProps> = (
       // Fetch photos for each album
       const albumsWithPhotos = await Promise.all(
         (albumsData || []).map(async (album) => {
-          const { data: photosData, error: photosError } = await supabase
+          const { data: photosData, error: photosError } = await backend
             .from('photos')
             .select('*')
             .eq('album_id', album.id)

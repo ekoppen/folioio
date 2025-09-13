@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Eye, ArrowRight } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import ProtectedImage from './ProtectedImage';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -50,7 +50,8 @@ const PortfolioGallery = ({ onAlbumSelect }: PortfolioGalleryProps) => {
 
   const fetchPortfolioSettings = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('site_settings')
         .select('portfolio_title, portfolio_description, portfolio_enabled, accent_color')
         .order('updated_at', { ascending: false })
@@ -75,7 +76,8 @@ const PortfolioGallery = ({ onAlbumSelect }: PortfolioGalleryProps) => {
   const fetchAlbums = async () => {
     try {
       // Fetch visible albums with their photos
-      const { data: albumsData, error: albumsError } = await supabase
+      const backend = getBackendAdapter();
+      const { data: albumsData, error: albumsError } = await backend
         .from('albums')
         .select('*, show_title_in_slideshow, show_description_in_slideshow')
         .eq('is_visible', true)
@@ -86,7 +88,7 @@ const PortfolioGallery = ({ onAlbumSelect }: PortfolioGalleryProps) => {
       // Fetch photos for each album
       const albumsWithPhotos = await Promise.all(
         (albumsData || []).map(async (album) => {
-          const { data: photosData, error: photosError } = await supabase
+          const { data: photosData, error: photosError } = await backend
             .from('photos')
             .select('*')
             .eq('album_id', album.id)

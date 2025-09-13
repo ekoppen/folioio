@@ -7,7 +7,7 @@ import About from '@/components/About';
 import CustomSection from '@/components/CustomSection';
 import SimplifiedFooter from '@/components/SimplifiedFooter';
 import { useAccentColor } from '@/hooks/useAccentColor';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 
 interface Photo {
   id: string;

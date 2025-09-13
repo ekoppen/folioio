@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import { ArrowLeft, Search, Eye, Plus } from 'lucide-react';
 
 interface Template {
@@ -417,7 +417,8 @@ export const TemplateLibrary = ({ onBack, onSelectTemplate }: TemplateLibraryPro
 
   const loadTemplates = async () => {
     try {
-      const { data, error } = await supabase
+      const backend = getBackendAdapter();
+      const { data, error } = await backend
         .from('page_builder_pages')
         .select('*')
         .eq('is_template', true)

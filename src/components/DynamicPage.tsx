@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { supabase } from '@/integrations/supabase/client';
+import { getBackendAdapter } from '@/config/backend-config';
 import Navigation from '@/components/Navigation';
 import SimplifiedFooter from '@/components/SimplifiedFooter';
 import { PageElement } from '@/components/page-editor/types';
@@ -30,7 +30,8 @@ const DynamicPage = () => {
       
       try {
         // Load page by slug or homepage
-        const query = supabase
+        const backend = getBackendAdapter();
+        const query = backend
           .from('page_builder_pages')
           .select('*')
           .eq('is_published', true);
@@ -67,7 +68,7 @@ const DynamicPage = () => {
         setPage(pageData);
         
         // Load page elements
-        const { data: elementsData } = await supabase
+        const { data: elementsData } = await backend
           .from('page_builder_elements')
           .select('*')
           .eq('page_id', pageData.id)
