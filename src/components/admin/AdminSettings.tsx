@@ -232,7 +232,8 @@ export const AdminSettings = () => {
         'nav_title_font_url', 'nav_title_font_size', 'nav_title_color', 'nav_title_margin_top', 'nav_title_margin_left',
         'nav_tagline_visible', 'nav_tagline_font_family', 'nav_tagline_font_url', 'nav_tagline_font_size',
         'nav_tagline_color', 'nav_tagline_margin_top', 'nav_tagline_margin_left', 'nav_text_shadow',
-        'show_logo', 'nav_logo_visible', 'header_background_color'
+        'show_logo', 'nav_logo_visible', 'header_background_color', 'title_visible', 'tagline_visible',
+        'title_font_size', 'title_color', 'title_position', 'tagline_font_size', 'tagline_color', 'tagline_position'
       ];
       
       // Only include fields that have actually changed and exist in the database

@@ -253,7 +253,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
       console.log('Hero: Backend adapter:', backend);
       const { data, error } = await backend
         .from('site_settings')
-        .select('site_title, site_tagline, home_show_title_overlay, home_show_buttons, accent_color, footer_background_color, logo_margin_left, content_font_family, title_font_family, slideshow_interval, slideshow_transition, slideshow_info_card_enabled, slideshow_info_card_radius, slideshow_info_card_opacity, slideshow_info_card_position, slideshow_info_card_text_size, slideshow_show_arrows, slideshow_show_dots')
+        .select('site_title, site_tagline, home_show_title_overlay, home_show_buttons, accent_color, footer_background_color, logo_margin_left, content_font_family, title_font_family, title_visible, title_font_size, title_color, title_position, tagline_visible, tagline_font_family, tagline_font_size, tagline_color, tagline_position, slideshow_interval, slideshow_transition, slideshow_info_card_enabled, slideshow_info_card_radius, slideshow_info_card_opacity, slideshow_info_card_position, slideshow_info_card_text_size, slideshow_show_arrows, slideshow_show_dots')
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -283,6 +283,15 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
           footer_background_color: data.footer_background_color || '#2D3748',
           logo_margin_left: data.logo_margin_left || 0,
           content_font_family: data.content_font_family,
+          title_visible: data.title_visible ?? true,
+          title_font_size: data.title_font_size || 56,
+          title_color: data.title_color || '#ffffff',
+          title_position: data.title_position || 'center',
+          tagline_visible: data.tagline_visible ?? true,
+          tagline_font_family: data.tagline_font_family || 'Roboto',
+          tagline_font_size: data.tagline_font_size || 20,
+          tagline_color: data.tagline_color || '#ffffff',
+          tagline_position: data.tagline_position || 'center',
           title_font_family: data.title_font_family,
           slideshow_interval: data.slideshow_interval || 6000,
           slideshow_transition: data.slideshow_transition || 'fade',

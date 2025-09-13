@@ -361,11 +361,7 @@ const Navigation = () => {
             </div>
           )}
 
-          <div className={`hidden md:flex items-center justify-center space-x-6 lg:space-x-8 flex-1 ${
-            siteSettings.logo_position === 'center' || siteSettings.logo_position === 'right' 
-              ? 'mr-auto md:ml-16 lg:ml-0' 
-              : 'md:ml-16 lg:ml-0'
-          }`}>
+          <div className="hidden md:flex items-center justify-center space-x-6 lg:space-x-8 absolute left-1/2 transform -translate-x-1/2 z-10">
             <button
               onClick={() => scrollToSection('hero')}
               className="text-white/90 hover:text-white transition-colors"
