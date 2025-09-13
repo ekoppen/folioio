@@ -60,6 +60,12 @@ services:
       MINIO_SECRET_KEY: testsecret
       JWT_SECRET: test-jwt-secret-key
       CORS_ORIGIN: "*"
+      # Email service configuration - choose one:
+      # Option 1: Gmail SMTP (recommended voor jouw situatie)
+      GMAIL_USER: "jouw.email@gmail.com"
+      GMAIL_APP_PASSWORD: "jouw_gmail_app_password_hier"
+      # Option 2: Resend (alleen als je DNS records wilt wijzigen)
+      # RESEND_API_KEY: "re_your_resend_api_key_here"
     depends_on:
       postgres:
         condition: service_healthy

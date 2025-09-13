@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getBackendAdapter } from '@/config/backend-config';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Phone, MapPin, MessageSquare, Eye, EyeOff } from 'lucide-react';
@@ -20,6 +21,11 @@ interface ContactSettings {
   auto_reply_subject: string;
   auto_reply_message: string;
   notification_email?: string;
+  // Email service settings
+  email_service_type?: 'gmail' | 'resend';
+  gmail_user?: string;
+  gmail_app_password?: string;
+  resend_api_key?: string;
 }
 
 interface ContactMessage {
@@ -40,6 +46,10 @@ const AdminContact = () => {
     auto_reply_enabled: true,
     auto_reply_subject: 'Bedankt voor je bericht',
     auto_reply_message: 'Bedankt voor je bericht! We nemen zo snel mogelijk contact met je op.',
+    email_service_type: 'gmail',
+    gmail_user: '',
+    gmail_app_password: '',
+    resend_api_key: ''
   });
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +66,7 @@ const AdminContact = () => {
       const backend = getBackendAdapter();
       const { data, error } = await backend
         .from('site_settings')
-        .select('contact_email, contact_phone, contact_address, form_enabled, auto_reply_enabled, auto_reply_subject, auto_reply_message, notification_email')
+        .select('contact_email, contact_phone, contact_address, form_enabled, auto_reply_enabled, auto_reply_subject, auto_reply_message, notification_email, email_service_type, gmail_user, gmail_app_password, resend_api_key')
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -244,6 +254,89 @@ const AdminContact = () => {
                 onChange={(e) => setSettings(prev => ({ ...prev, contact_address: e.target.value }))}
               />
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Email Service Configuration */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-lg">Email Service Configuratie</h4>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email_service_type">Email Service</Label>
+              <Select
+                value={settings.email_service_type || 'gmail'}
+                onValueChange={(value: 'gmail' | 'resend') => 
+                  setSettings(prev => ({ ...prev, email_service_type: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecteer email service" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gmail">Gmail SMTP (Aanbevolen)</SelectItem>
+                  <SelectItem value="resend">Resend</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {settings.email_service_type === 'gmail' && (
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+                <h5 className="font-medium">Gmail SMTP Configuratie</h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="gmail_user">Gmail Email *</Label>
+                    <Input
+                      id="gmail_user"
+                      type="email"
+                      value={settings.gmail_user || ''}
+                      onChange={(e) => setSettings(prev => ({ ...prev, gmail_user: e.target.value }))}
+                      placeholder="jouw.email@gmail.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gmail_app_password">Gmail App Password *</Label>
+                    <Input
+                      id="gmail_app_password"
+                      type="password"
+                      value={settings.gmail_app_password || ''}
+                      onChange={(e) => setSettings(prev => ({ ...prev, gmail_app_password: e.target.value }))}
+                      placeholder="abcd efgh ijkl mnop"
+                    />
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground p-3 bg-blue-50 rounded-md">
+                  <strong>Gmail App Password Setup:</strong>
+                  <ol className="list-decimal list-inside mt-2 space-y-1">
+                    <li>Ga naar <strong>Google Account Security</strong></li>
+                    <li>Activeer <strong>2-Step Verification</strong></li>
+                    <li>Zoek naar <strong>"App passwords"</strong></li>
+                    <li>Maak een nieuw app password voor "Mail"</li>
+                    <li>Kopieer het 16-karakter password hierboven</li>
+                  </ol>
+                </div>
+              </div>
+            )}
+
+            {settings.email_service_type === 'resend' && (
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+                <h5 className="font-medium">Resend Configuratie</h5>
+                <div className="space-y-2">
+                  <Label htmlFor="resend_api_key">Resend API Key *</Label>
+                  <Input
+                    id="resend_api_key"
+                    type="password"
+                    value={settings.resend_api_key || ''}
+                    onChange={(e) => setSettings(prev => ({ ...prev, resend_api_key: e.target.value }))}
+                    placeholder="re_..."
+                  />
+                </div>
+                <div className="text-sm text-muted-foreground p-3 bg-yellow-50 rounded-md">
+                  <strong>Waarschuwing:</strong> Voor Resend moet je DNS records van je domein aanpassen. 
+                  Gmail SMTP is eenvoudiger te configureren zonder DNS wijzigingen.
+                </div>
+              </div>
+            )}
           </div>
 
           <Separator />
