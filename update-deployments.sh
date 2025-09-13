@@ -66,13 +66,24 @@ update_deployment() {
         return 1
     fi
     
-    # Check if it's running
+    # Check if it's running and create database backup
     cd "$deploy_dir"
     if docker compose ps --quiet > /dev/null 2>&1; then
         IS_RUNNING=$(docker compose ps --services --filter "status=running" | wc -l)
         if [ $IS_RUNNING -gt 0 ]; then
-            echo "  ⏸️  Stopping containers..."
-            docker compose down
+            echo "  💾 Creating database backup before update..."
+            mkdir -p backups
+            BACKUP_FILE="backups/db_backup_$(date +%Y%m%d_%H%M%S).sql"
+            
+            # Create database backup
+            if docker compose exec -T postgres pg_dump -U postgres portfolio_db > "$BACKUP_FILE" 2>/dev/null; then
+                echo "  ✅ Database backup created: $BACKUP_FILE"
+            else
+                echo "  ⚠️  Database backup failed, but continuing..."
+            fi
+            
+            echo "  ⏸️  Stopping containers (preserving volumes)..."
+            docker compose down --remove-orphans
         fi
     fi
     
@@ -80,6 +91,17 @@ update_deployment() {
     if [ -f ".env" ]; then
         echo "  💾 Backing up environment file..."
         cp .env .env.backup
+    fi
+    
+    # Ensure critical data directories exist and have correct permissions
+    echo "  📁 Ensuring data directories are preserved..."
+    mkdir -p data/postgres data/minio
+    
+    # Check if postgres data exists
+    if [ -d "data/postgres" ] && [ "$(ls -A data/postgres 2>/dev/null)" ]; then
+        echo "  ✅ PostgreSQL data directory exists and contains data"
+    else
+        echo "  ⚠️  PostgreSQL data directory is empty - database will be recreated"
     fi
     
     # Go back to main directory
@@ -153,6 +175,28 @@ EOF
         
         if [ $RUNNING_SERVICES -eq $TOTAL_SERVICES ]; then
             echo "  ✅ All services healthy ($RUNNING_SERVICES/$TOTAL_SERVICES running)"
+            
+            # Check database integrity after update
+            echo "  🔍 Verifying database integrity..."
+            sleep 3  # Give database time to fully start
+            
+            # Check if data was preserved (not reset to defaults)
+            DB_CHECK=$(docker compose exec -T postgres psql -U postgres portfolio_db -t -c "SELECT COUNT(*) FROM site_settings;" 2>/dev/null | tr -d '[:space:]' 2>/dev/null)
+            if [ "$DB_CHECK" -gt 0 ]; then
+                echo "  ✅ Database contains user settings"
+                
+                # Quick check if settings look like defaults (potential data loss)
+                DEFAULT_CHECK=$(docker compose exec -T postgres psql -U postgres portfolio_db -t -c "SELECT CASE WHEN site_title = 'Portfolio' AND contact_email = 'contact@example.com' THEN 'defaults' ELSE 'custom' END FROM site_settings LIMIT 1;" 2>/dev/null | tr -d '[:space:]' 2>/dev/null)
+                if [ "$DEFAULT_CHECK" = "defaults" ]; then
+                    echo "  ⚠️  WARNING: Settings appear to be reset to defaults!"
+                    echo "      Your custom settings may have been lost."
+                    echo "      Check backup: $BACKUP_FILE"
+                else
+                    echo "  ✅ Custom settings preserved"
+                fi
+            else
+                echo "  ⚠️  Database appears empty - this may be a new installation"
+            fi
         else
             echo "  ⚠️  Some services may not be running ($RUNNING_SERVICES/$TOTAL_SERVICES)"
             echo "      Check logs: cd $deploy_dir && docker compose logs"
