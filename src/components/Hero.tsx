@@ -248,6 +248,12 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
       if (error) throw error;
       
       if (data) {
+        console.log('Slideshow settings from DB:', {
+          slideshow_show_arrows: data.slideshow_show_arrows,
+          slideshow_show_dots: data.slideshow_show_dots,
+          slideshow_transition: data.slideshow_transition
+        });
+        
         setSettings({
           site_title: data.site_title || 'Creatieve Portfolio',
           site_tagline: data.site_tagline || 'Ontdek mijn werk, verhalen en creatieve visie',
@@ -279,8 +285,8 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
           slideshow_info_card_opacity: data.slideshow_info_card_opacity || 0.8,
           slideshow_info_card_position: data.slideshow_info_card_position || 'bottom-left',
           slideshow_info_card_text_size: data.slideshow_info_card_text_size || 14,
-          slideshow_show_arrows: data.slideshow_show_arrows ?? true,
-          slideshow_show_dots: data.slideshow_show_dots ?? true
+          slideshow_show_arrows: data.slideshow_show_arrows,
+          slideshow_show_dots: data.slideshow_show_dots
         });
       }
     } catch (error) {
@@ -464,7 +470,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
       )}
       
       {/* Navigation Arrows - only show if there are multiple photos */}
-      {photosToShow.length > 1 && settings?.slideshow_show_arrows !== false && (
+      {photosToShow.length > 1 && settings?.slideshow_show_arrows === true && (
         <>
           <Button
             variant="ghost"
@@ -486,7 +492,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
       )}
 
       {/* Slide Indicators */}
-      {photosToShow.length > 1 && settings?.slideshow_show_dots !== false && (
+      {photosToShow.length > 1 && settings?.slideshow_show_dots === true && (
         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 flex gap-2">
           {photosToShow.map((_, index) => (
             <button
