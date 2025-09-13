@@ -1,4 +1,12 @@
-# Welcome to your Lovable project
+# Portfolio CMS with Local Backend
+
+A professional portfolio content management system with local backend support, email services, and Docker deployment.
+
+## 📧 Email Configuration
+
+**New Feature**: Complete email service integration with Gmail SMTP and Resend support.
+
+👉 **[Email Setup Guide](EMAIL_SETUP.md)** - Complete instructions for configuring email services
 
 ## Project info
 
