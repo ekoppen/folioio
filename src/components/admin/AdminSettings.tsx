@@ -146,7 +146,7 @@ export const AdminSettings = () => {
     portfolio_description: 'Ontdek verschillende projecten en albums die mijn creatieve reis weerspiegelen.',
     portfolio_enabled: true,
     // Slideshow defaults
-    slideshow_interval: 6000,
+    slideshow_interval: 6000, // 6 seconds in milliseconds
     slideshow_transition: 'fade',
     slideshow_info_card_enabled: true,
     slideshow_info_card_radius: 8,
@@ -1253,15 +1253,15 @@ export const AdminSettings = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="slideshow_interval">Interval (milliseconden)</Label>
+              <Label htmlFor="slideshow_interval">Interval (seconden)</Label>
               <Input
                 id="slideshow_interval"
                 type="number"
-                min="1000"
-                max="30000"
-                step="1000"
-                value={settings.slideshow_interval || 6000}
-                onChange={(e) => setSettings({...settings, slideshow_interval: parseInt(e.target.value)})}
+                min="1"
+                max="30"
+                step="1"
+                value={Math.round((settings.slideshow_interval || 6000) / 1000)}
+                onChange={(e) => setSettings({...settings, slideshow_interval: parseInt(e.target.value) * 1000})}
               />
             </div>
             <div>

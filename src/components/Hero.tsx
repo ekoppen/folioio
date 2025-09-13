@@ -248,11 +248,6 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
       if (error) throw error;
       
       if (data) {
-        console.log('Slideshow settings from DB:', {
-          slideshow_show_arrows: data.slideshow_show_arrows,
-          slideshow_show_dots: data.slideshow_show_dots,
-          slideshow_transition: data.slideshow_transition
-        });
         
         setSettings({
           site_title: data.site_title || 'Creatieve Portfolio',
@@ -331,6 +326,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
       <div className="absolute inset-0 z-0">
         {photosToShow.length > 0 ? (
           photosToShow.map((photo, index) => {
+            
             const transitionClass = settings?.slideshow_transition === 'slide' 
               ? 'transform transition-transform duration-1000' 
               : 'transition-opacity duration-1000';
