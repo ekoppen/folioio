@@ -367,14 +367,30 @@ INSERT INTO public.languages (code, name, is_enabled, is_default)
 VALUES ('nl', 'Nederlands', true, true)
 ON CONFLICT (code) DO NOTHING;
 
-INSERT INTO public.site_settings DEFAULT VALUES
-ON CONFLICT DO NOTHING;
+-- Only insert default site_settings if table is completely empty
+-- This prevents overwriting existing data during updates
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.site_settings) THEN
+    INSERT INTO public.site_settings DEFAULT VALUES;
+  END IF;
+END $$;
 
-INSERT INTO public.about_settings DEFAULT VALUES
-ON CONFLICT DO NOTHING;
+-- Only insert default about_settings if table is completely empty
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.about_settings) THEN
+    INSERT INTO public.about_settings DEFAULT VALUES;
+  END IF;
+END $$;
 
-INSERT INTO public.contact_settings DEFAULT VALUES
-ON CONFLICT DO NOTHING;
+-- Only insert default contact_settings if table is completely empty
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.contact_settings) THEN
+    INSERT INTO public.contact_settings DEFAULT VALUES;
+  END IF;
+END $$;
 
 -- Create utility functions
 CREATE OR REPLACE FUNCTION is_admin(_user_id UUID DEFAULT NULL)
