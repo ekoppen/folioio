@@ -68,6 +68,42 @@ update_deployment() {
     
     # Check if it's running and create database backup
     cd "$deploy_dir"
+    
+    # CRITICAL: Check if data directory exists and has PostgreSQL data BEFORE stopping
+    echo "  🔍 Checking current database state..."
+    
+    # Check for Docker volumes (old deployments might use these)
+    VOLUME_NAME="${deployment}_postgres_data"
+    VOLUME_EXISTS=$(docker volume ls -q | grep -E "^${VOLUME_NAME}$|^${deployment}_postgres_data$" | head -1)
+    
+    if [ -n "$VOLUME_EXISTS" ]; then
+        echo "  📦 Found Docker volume: $VOLUME_EXISTS"
+        # Extract data from Docker volume to local directory
+        echo "  🔄 Migrating from Docker volume to local directory..."
+        mkdir -p data/postgres
+        
+        # Create temporary container to copy data
+        docker run --rm -v "$VOLUME_EXISTS:/source:ro" -v "$(pwd)/data/postgres:/target" alpine sh -c "cp -a /source/. /target/" 2>/dev/null
+        
+        if [ "$(ls -A data/postgres 2>/dev/null)" ]; then
+            echo "  ✅ Successfully migrated PostgreSQL data from Docker volume"
+            DATA_EXISTS=true
+            MIGRATED_FROM_VOLUME=true
+        else
+            echo "  ⚠️  Failed to migrate data from Docker volume"
+            DATA_EXISTS=false
+            MIGRATED_FROM_VOLUME=false
+        fi
+    elif [ -d "data/postgres" ] && [ "$(ls -A data/postgres 2>/dev/null)" ]; then
+        echo "  ✅ Found existing PostgreSQL data in data/postgres"
+        DATA_EXISTS=true
+        MIGRATED_FROM_VOLUME=false
+    else
+        echo "  ⚠️  No existing PostgreSQL data found"
+        DATA_EXISTS=false
+        MIGRATED_FROM_VOLUME=false
+    fi
+    
     if docker compose ps --quiet > /dev/null 2>&1; then
         IS_RUNNING=$(docker compose ps --services --filter "status=running" | wc -l)
         if [ $IS_RUNNING -gt 0 ]; then
@@ -75,15 +111,18 @@ update_deployment() {
             mkdir -p backups
             BACKUP_FILE="backups/db_backup_$(date +%Y%m%d_%H%M%S).sql"
             
-            # Create database backup
+            # Create database backup BEFORE stopping containers
             if docker compose exec -T postgres pg_dump -U postgres portfolio_db > "$BACKUP_FILE" 2>/dev/null; then
                 echo "  ✅ Database backup created: $BACKUP_FILE"
+                BACKUP_SUCCESS=true
             else
                 echo "  ⚠️  Database backup failed, but continuing..."
+                BACKUP_SUCCESS=false
             fi
             
-            echo "  ⏸️  Stopping containers (preserving volumes)..."
-            docker compose down --remove-orphans
+            # CRITICAL: Stop containers but NEVER remove volumes
+            echo "  ⏸️  Stopping containers SAFELY (preserving all data)..."
+            docker compose stop  # Use 'stop' instead of 'down' to preserve everything
         fi
     fi
     
@@ -93,15 +132,37 @@ update_deployment() {
         cp .env .env.backup
     fi
     
-    # Ensure critical data directories exist and have correct permissions
-    echo "  📁 Ensuring data directories are preserved..."
-    mkdir -p data/postgres data/minio
+    # CRITICAL: Preserve existing data directories AT ALL COSTS
+    echo "  📁 Preserving existing data directories..."
     
-    # Check if postgres data exists
-    if [ -d "data/postgres" ] && [ "$(ls -A data/postgres 2>/dev/null)" ]; then
-        echo "  ✅ PostgreSQL data directory exists and contains data"
+    # Create directories ONLY if they don't exist (never overwrite!)
+    if [ ! -d "data" ]; then
+        mkdir -p data/postgres data/minio
+        echo "  📁 Created new data directories"
     else
-        echo "  ⚠️  PostgreSQL data directory is empty - database will be recreated"
+        echo "  ✅ Data directory already exists - preserving all contents"
+        # NEVER delete or recreate these directories!
+        if [ ! -d "data/postgres" ]; then
+            mkdir -p data/postgres
+            echo "  📁 Created postgres subdirectory"
+        fi
+        if [ ! -d "data/minio" ]; then
+            mkdir -p data/minio
+            echo "  📁 Created minio subdirectory"
+        fi
+    fi
+    
+    # Double-check if postgres data exists after operations
+    if [ -d "data/postgres" ] && [ "$(ls -A data/postgres 2>/dev/null)" ]; then
+        echo "  ✅ PostgreSQL data preserved successfully"
+    else
+        echo "  ⚠️  WARNING: PostgreSQL data directory is empty"
+        echo "      This will cause a fresh database to be created!"
+        if [ "$BACKUP_SUCCESS" = "true" ]; then
+            echo "      Will attempt to restore from backup: $BACKUP_FILE"
+        else
+            echo "      ❌ NO BACKUP AVAILABLE - DATA WILL BE LOST!"
+        fi
     fi
     
     # Go back to main directory
@@ -165,11 +226,42 @@ EOF
     fi
     
     echo "  🐳 Starting containers..."
+    
+    # CRITICAL: Check if we need to restore database
+    if [ "$DATA_EXISTS" = "false" ] && [ "$BACKUP_SUCCESS" = "true" ]; then
+        echo "  🚨 CRITICAL: Database data was lost! Will restore from backup after containers start."
+        NEEDS_RESTORE=true
+    else
+        NEEDS_RESTORE=false
+    fi
+    
     if docker compose up -d --build > /dev/null 2>&1; then
         echo "  ✅ Containers started successfully"
         
         # Wait a bit and check health
         sleep 5
+        
+        # RESTORE DATABASE IF NEEDED
+        if [ "$NEEDS_RESTORE" = "true" ]; then
+            echo "  🔄 Restoring database from backup..."
+            sleep 5  # Give postgres more time to start
+            if docker compose exec -T postgres psql -U postgres portfolio_db < "$BACKUP_FILE" 2>/dev/null; then
+                echo "  ✅ Database restored successfully from backup!"
+            else
+                echo "  ❌ CRITICAL: Database restore failed! Manual intervention needed."
+                echo "      Backup file: $BACKUP_FILE"
+            fi
+        fi
+        
+        # CLEANUP MIGRATED DOCKER VOLUME
+        if [ "$MIGRATED_FROM_VOLUME" = "true" ] && [ -n "$VOLUME_EXISTS" ]; then
+            echo "  🧹 Cleaning up old Docker volume: $VOLUME_EXISTS"
+            if docker volume rm "$VOLUME_EXISTS" 2>/dev/null; then
+                echo "  ✅ Old Docker volume removed successfully"
+            else
+                echo "  ⚠️  Could not remove old Docker volume (may still be in use)"
+            fi
+        fi
         RUNNING_SERVICES=$(docker compose ps --services --filter "status=running" | wc -l)
         TOTAL_SERVICES=$(docker compose ps --services | wc -l)
         
@@ -217,6 +309,16 @@ EOF
     
     cd ../..
     echo "  ✅ Update completed for $deployment"
+    
+    # Status summary
+    if [ "$MIGRATED_FROM_VOLUME" = "true" ]; then
+        echo "  📦 Migrated from Docker volume to local directory"
+    fi
+    if [ "$DATA_EXISTS" = "true" ]; then
+        echo "  💾 Database data preserved successfully"
+    else
+        echo "  ⚠️  Database will be recreated (no existing data found)"
+    fi
     echo ""
 }
 
