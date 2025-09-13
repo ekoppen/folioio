@@ -55,22 +55,24 @@ const AdminContact = () => {
     try {
       const backend = getBackendAdapter();
       const { data, error } = await backend
-        .from('contact_settings')
-        .select('*')
+        .from('site_settings')
+        .select('contact_email, contact_phone, contact_address, form_enabled, auto_reply_enabled, auto_reply_subject, auto_reply_message, notification_email')
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
       
       if (data) {
         setSettings({
-          contact_email: data.contact_email,
-          contact_phone: data.contact_phone,
-          contact_address: data.contact_address,
-          form_enabled: data.form_enabled,
-          auto_reply_enabled: data.auto_reply_enabled,
-          auto_reply_subject: data.auto_reply_subject,
-          auto_reply_message: data.auto_reply_message,
-          notification_email: data.notification_email,
+          contact_email: data.contact_email || 'contact@example.com',
+          contact_phone: data.contact_phone || '',
+          contact_address: data.contact_address || '',
+          form_enabled: data.form_enabled ?? true,
+          auto_reply_enabled: data.auto_reply_enabled ?? true,
+          auto_reply_subject: data.auto_reply_subject || 'Bedankt voor je bericht',
+          auto_reply_message: data.auto_reply_message || 'Bedankt voor je bericht! We nemen zo snel mogelijk contact met je op.',
+          notification_email: data.notification_email || '',
         });
       }
     } catch (error) {
@@ -104,11 +106,49 @@ const AdminContact = () => {
     setUpdating(true);
     try {
       const backend = getBackendAdapter();
-      const { error } = await backend
-        .from('contact_settings')
-        .upsert(settings);
+      
+      // First check if settings exist
+      const { data: existing } = await backend
+        .from('site_settings')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existing) {
+        // Update existing settings
+        const { error } = await backend
+          .from('site_settings')
+          .update({
+            contact_email: settings.contact_email,
+            contact_phone: settings.contact_phone,
+            contact_address: settings.contact_address,
+            form_enabled: settings.form_enabled,
+            auto_reply_enabled: settings.auto_reply_enabled,
+            auto_reply_subject: settings.auto_reply_subject,
+            auto_reply_message: settings.auto_reply_message,
+            notification_email: settings.notification_email,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existing.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new settings
+        const { error } = await backend
+          .from('site_settings')
+          .insert({
+            contact_email: settings.contact_email,
+            contact_phone: settings.contact_phone,
+            contact_address: settings.contact_address,
+            form_enabled: settings.form_enabled,
+            auto_reply_enabled: settings.auto_reply_enabled,
+            auto_reply_subject: settings.auto_reply_subject,
+            auto_reply_message: settings.auto_reply_message,
+            notification_email: settings.notification_email
+          });
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Opgeslagen",
