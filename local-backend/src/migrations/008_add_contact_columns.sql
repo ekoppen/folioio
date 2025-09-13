@@ -12,17 +12,41 @@ ADD COLUMN IF NOT EXISTS auto_reply_subject VARCHAR(255) DEFAULT 'Bedankt voor j
 ADD COLUMN IF NOT EXISTS auto_reply_message TEXT DEFAULT 'Bedankt voor je bericht! We nemen zo snel mogelijk contact met je op.',
 ADD COLUMN IF NOT EXISTS notification_email VARCHAR(255);
 
--- Update existing rows to have default values if they exist
+-- Update existing rows to have default values ONLY if they are NULL
 UPDATE site_settings 
 SET 
-    contact_email = COALESCE(contact_email, 'contact@example.com'),
-    contact_phone = COALESCE(contact_phone, '+31 6 1234 5678'),
-    contact_address = COALESCE(contact_address, 'Nederland'),
-    form_enabled = COALESCE(form_enabled, true),
-    auto_reply_enabled = COALESCE(auto_reply_enabled, true),
-    auto_reply_subject = COALESCE(auto_reply_subject, 'Bedankt voor je bericht'),
-    auto_reply_message = COALESCE(auto_reply_message, 'Bedankt voor je bericht! We nemen zo snel mogelijk contact met je op.')
-WHERE id IS NOT NULL;
+    contact_email = 'contact@example.com'
+WHERE contact_email IS NULL;
+
+UPDATE site_settings 
+SET 
+    contact_phone = '+31 6 1234 5678'
+WHERE contact_phone IS NULL;
+
+UPDATE site_settings 
+SET 
+    contact_address = 'Nederland'
+WHERE contact_address IS NULL;
+
+UPDATE site_settings 
+SET 
+    form_enabled = true
+WHERE form_enabled IS NULL;
+
+UPDATE site_settings 
+SET 
+    auto_reply_enabled = true
+WHERE auto_reply_enabled IS NULL;
+
+UPDATE site_settings 
+SET 
+    auto_reply_subject = 'Bedankt voor je bericht'
+WHERE auto_reply_subject IS NULL;
+
+UPDATE site_settings 
+SET 
+    auto_reply_message = 'Bedankt voor je bericht! We nemen zo snel mogelijk contact met je op.'
+WHERE auto_reply_message IS NULL;
 
 -- Create contact_messages table if it doesn't exist
 CREATE TABLE IF NOT EXISTS contact_messages (

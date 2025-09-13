@@ -16,22 +16,66 @@ ADD COLUMN IF NOT EXISTS title_color VARCHAR(7) DEFAULT '#ffffff',
 ADD COLUMN IF NOT EXISTS title_position VARCHAR(10) DEFAULT 'center',
 ADD COLUMN IF NOT EXISTS tagline_position VARCHAR(10) DEFAULT 'center';
 
--- Update existing rows to have default values if they exist
+-- Update existing rows to have default values ONLY if they are NULL
 UPDATE site_settings 
 SET 
-    header_title = COALESCE(header_title, 'Portfolio'),
-    tagline = COALESCE(tagline, 'Welkom op mijn portfolio'),
-    tagline_font_family = COALESCE(tagline_font_family, 'site'),
-    tagline_font_size = COALESCE(tagline_font_size, 18),
-    tagline_color = COALESCE(tagline_color, '#ffffff'),
-    tagline_text_align = COALESCE(tagline_text_align, 'center'),
-    title_visible = COALESCE(title_visible, true),
-    tagline_visible = COALESCE(tagline_visible, true),
-    title_font_size = COALESCE(title_font_size, 56),
-    title_color = COALESCE(title_color, '#ffffff'),
-    title_position = COALESCE(title_position, 'center'),
-    tagline_position = COALESCE(tagline_position, 'center')
-WHERE id IS NOT NULL;
+    header_title = 'Portfolio'
+WHERE header_title IS NULL;
+
+UPDATE site_settings 
+SET 
+    tagline = 'Welkom op mijn portfolio'
+WHERE tagline IS NULL;
+
+UPDATE site_settings 
+SET 
+    tagline_font_family = 'site'
+WHERE tagline_font_family IS NULL;
+
+UPDATE site_settings 
+SET 
+    tagline_font_size = 18
+WHERE tagline_font_size IS NULL;
+
+UPDATE site_settings 
+SET 
+    tagline_color = '#ffffff'
+WHERE tagline_color IS NULL;
+
+UPDATE site_settings 
+SET 
+    tagline_text_align = 'center'
+WHERE tagline_text_align IS NULL;
+
+UPDATE site_settings 
+SET 
+    title_visible = true
+WHERE title_visible IS NULL;
+
+UPDATE site_settings 
+SET 
+    tagline_visible = true
+WHERE tagline_visible IS NULL;
+
+UPDATE site_settings 
+SET 
+    title_font_size = 56
+WHERE title_font_size IS NULL;
+
+UPDATE site_settings 
+SET 
+    title_color = '#ffffff'
+WHERE title_color IS NULL;
+
+UPDATE site_settings 
+SET 
+    title_position = 'center'
+WHERE title_position IS NULL;
+
+UPDATE site_settings 
+SET 
+    tagline_position = 'center'
+WHERE tagline_position IS NULL;
 
 -- Create index for better query performance
 CREATE INDEX IF NOT EXISTS idx_site_settings_header_title ON site_settings(header_title);
