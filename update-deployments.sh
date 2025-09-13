@@ -71,37 +71,78 @@ update_deployment() {
     
     # CRITICAL: Check if data directory exists and has PostgreSQL data BEFORE stopping
     echo "  🔍 Checking current database state..."
+    echo "  📂 Current directory: $(pwd)"
     
-    # Check for Docker volumes (old deployments might use these)
-    VOLUME_NAME="${deployment}_postgres_data"
-    VOLUME_EXISTS=$(docker volume ls -q | grep -E "^${VOLUME_NAME}$|^${deployment}_postgres_data$" | head -1)
+    # Check all possible data locations
+    echo "  🔍 Checking for existing PostgreSQL data..."
     
-    if [ -n "$VOLUME_EXISTS" ]; then
-        echo "  📦 Found Docker volume: $VOLUME_EXISTS"
-        # Extract data from Docker volume to local directory
-        echo "  🔄 Migrating from Docker volume to local directory..."
-        mkdir -p data/postgres
-        
-        # Create temporary container to copy data
-        docker run --rm -v "$VOLUME_EXISTS:/source:ro" -v "$(pwd)/data/postgres:/target" alpine sh -c "cp -a /source/. /target/" 2>/dev/null
-        
-        if [ "$(ls -A data/postgres 2>/dev/null)" ]; then
-            echo "  ✅ Successfully migrated PostgreSQL data from Docker volume"
+    # Check local data directory
+    if [ -d "data/postgres" ]; then
+        FILE_COUNT=$(find data/postgres -type f 2>/dev/null | wc -l)
+        echo "  📁 Local data/postgres exists with $FILE_COUNT files"
+        if [ "$FILE_COUNT" -gt 0 ]; then
+            echo "  ✅ Found existing PostgreSQL data in data/postgres"
             DATA_EXISTS=true
-            MIGRATED_FROM_VOLUME=true
+            MIGRATED_FROM_VOLUME=false
         else
-            echo "  ⚠️  Failed to migrate data from Docker volume"
+            echo "  ⚠️  data/postgres directory exists but is empty"
             DATA_EXISTS=false
             MIGRATED_FROM_VOLUME=false
         fi
-    elif [ -d "data/postgres" ] && [ "$(ls -A data/postgres 2>/dev/null)" ]; then
-        echo "  ✅ Found existing PostgreSQL data in data/postgres"
-        DATA_EXISTS=true
-        MIGRATED_FROM_VOLUME=false
     else
-        echo "  ⚠️  No existing PostgreSQL data found"
+        echo "  📁 No local data/postgres directory found"
         DATA_EXISTS=false
         MIGRATED_FROM_VOLUME=false
+    fi
+    
+    # If no local data, check for Docker volumes
+    if [ "$DATA_EXISTS" = "false" ]; then
+        echo "  🔍 Searching for Docker volumes..."
+        ALL_VOLUMES=$(docker volume ls -q)
+        VOLUME_EXISTS=""
+        
+        # Try different volume name patterns
+        for pattern in "${deployment}_postgres_data" "${deployment}-postgres-data" "postgres_data" "portfolio_postgres_data"; do
+            FOUND_VOLUME=$(echo "$ALL_VOLUMES" | grep -E "^${pattern}$" | head -1)
+            if [ -n "$FOUND_VOLUME" ]; then
+                VOLUME_EXISTS="$FOUND_VOLUME"
+                echo "  📦 Found Docker volume: $VOLUME_EXISTS"
+                break
+            fi
+        done
+        
+        if [ -n "$VOLUME_EXISTS" ]; then
+            # Extract data from Docker volume to local directory
+            echo "  🔄 Migrating from Docker volume to local directory..."
+            mkdir -p data/postgres
+            
+            # Create temporary container to copy data
+            if docker run --rm -v "$VOLUME_EXISTS:/source:ro" -v "$(pwd)/data/postgres:/target" alpine sh -c "cp -a /source/. /target/" 2>/dev/null; then
+                FILE_COUNT=$(find data/postgres -type f 2>/dev/null | wc -l)
+                if [ "$FILE_COUNT" -gt 0 ]; then
+                    echo "  ✅ Successfully migrated $FILE_COUNT files from Docker volume"
+                    DATA_EXISTS=true
+                    MIGRATED_FROM_VOLUME=true
+                else
+                    echo "  ⚠️  Migration completed but no files found"
+                    DATA_EXISTS=false
+                    MIGRATED_FROM_VOLUME=false
+                fi
+            else
+                echo "  ❌ Failed to migrate data from Docker volume"
+                DATA_EXISTS=false
+                MIGRATED_FROM_VOLUME=false
+            fi
+        else
+            echo "  📦 No Docker volumes found with common patterns"
+        fi
+    fi
+    
+    # Final status
+    if [ "$DATA_EXISTS" = "true" ]; then
+        echo "  💾 PostgreSQL data is available and will be preserved"
+    else
+        echo "  ⚠️  No PostgreSQL data found - database will be recreated"
     fi
     
     if docker compose ps --quiet > /dev/null 2>&1; then
@@ -135,6 +176,13 @@ update_deployment() {
     # CRITICAL: Preserve existing data directories AT ALL COSTS
     echo "  📁 Preserving existing data directories..."
     
+    # Backup data directory BEFORE any operations
+    if [ -d "data" ] && [ "$(find data -type f 2>/dev/null | wc -l)" -gt 0 ]; then
+        echo "  💾 Creating safety backup of entire data directory..."
+        cp -r data data_backup_$(date +%Y%m%d_%H%M%S)
+        echo "  ✅ Data directory backed up for safety"
+    fi
+    
     # Create directories ONLY if they don't exist (never overwrite!)
     if [ ! -d "data" ]; then
         mkdir -p data/postgres data/minio
@@ -152,9 +200,13 @@ update_deployment() {
         fi
     fi
     
+    # Verify data preservation
+    POSTGRES_FILES_AFTER=$(find data/postgres -type f 2>/dev/null | wc -l)
+    echo "  🔍 PostgreSQL files after preservation: $POSTGRES_FILES_AFTER"
+    
     # Double-check if postgres data exists after operations
-    if [ -d "data/postgres" ] && [ "$(ls -A data/postgres 2>/dev/null)" ]; then
-        echo "  ✅ PostgreSQL data preserved successfully"
+    if [ -d "data/postgres" ] && [ "$POSTGRES_FILES_AFTER" -gt 0 ]; then
+        echo "  ✅ PostgreSQL data preserved successfully ($POSTGRES_FILES_AFTER files)"
     else
         echo "  ⚠️  WARNING: PostgreSQL data directory is empty"
         echo "      This will cause a fresh database to be created!"
@@ -171,11 +223,25 @@ update_deployment() {
     # Copy updated files
     echo "  📦 Copying updated files..."
     
+    # Temporarily move data directory to safety
+    if [ -d "$deploy_dir/data" ]; then
+        echo "  🛡️  Moving data directory to safety during file copy..."
+        mv "$deploy_dir/data" "$deploy_dir/data_temp_safe"
+    fi
+    
     # Copy core application files
     cp -r src public index.html package*.json vite.config.ts tsconfig*.json tailwind.config.ts postcss.config.js "$deploy_dir/" 2>/dev/null
     cp -r local-backend "$deploy_dir/"
     cp docker-compose.simple.yml "$deploy_dir/docker-compose.yml"
     cp nginx-simple.conf "$deploy_dir/"
+    
+    # Restore data directory from safety
+    if [ -d "$deploy_dir/data_temp_safe" ]; then
+        echo "  🛡️  Restoring data directory from safety..."
+        mv "$deploy_dir/data_temp_safe" "$deploy_dir/data"
+        POSTGRES_FILES_RESTORED=$(find "$deploy_dir/data/postgres" -type f 2>/dev/null | wc -l)
+        echo "  ✅ Data directory restored with $POSTGRES_FILES_RESTORED PostgreSQL files"
+    fi
     
     # Skip postgres-config migrations - using application-level migration system
     # The local-backend has its own migrator.js that handles migrations properly
@@ -207,9 +273,20 @@ EOF
     # Go to deployment directory
     cd "$deploy_dir"
     
-    # Create data directories if they don't exist
+    # Create data directories if they don't exist (but preserve existing data)
     echo "  📁 Ensuring data directories exist..."
-    mkdir -p data/postgres data/minio
+    if [ ! -d "data/postgres" ]; then
+        mkdir -p data/postgres
+        echo "  📁 Created missing postgres directory"
+    fi
+    if [ ! -d "data/minio" ]; then
+        mkdir -p data/minio
+        echo "  📁 Created missing minio directory"
+    fi
+    
+    # Final verification of data preservation
+    FINAL_POSTGRES_FILES=$(find data/postgres -type f 2>/dev/null | wc -l)
+    echo "  🔍 Final PostgreSQL file count: $FINAL_POSTGRES_FILES"
     
     # Restore .env file
     if [ -f ".env.backup" ]; then
@@ -228,10 +305,15 @@ EOF
     echo "  🐳 Starting containers..."
     
     # CRITICAL: Check if we need to restore database
-    if [ "$DATA_EXISTS" = "false" ] && [ "$BACKUP_SUCCESS" = "true" ]; then
+    CURRENT_POSTGRES_FILES=$(find data/postgres -type f 2>/dev/null | wc -l)
+    if [ "$CURRENT_POSTGRES_FILES" -eq 0 ] && [ "$BACKUP_SUCCESS" = "true" ]; then
         echo "  🚨 CRITICAL: Database data was lost! Will restore from backup after containers start."
         NEEDS_RESTORE=true
+    elif [ "$CURRENT_POSTGRES_FILES" -gt 0 ]; then
+        echo "  ✅ PostgreSQL data available ($CURRENT_POSTGRES_FILES files) - no restore needed"
+        NEEDS_RESTORE=false
     else
+        echo "  ℹ️  No existing data and no backup - fresh database will be created"
         NEEDS_RESTORE=false
     fi
     
@@ -314,10 +396,17 @@ EOF
     if [ "$MIGRATED_FROM_VOLUME" = "true" ]; then
         echo "  📦 Migrated from Docker volume to local directory"
     fi
-    if [ "$DATA_EXISTS" = "true" ]; then
-        echo "  💾 Database data preserved successfully"
+    FINAL_FILE_COUNT=$(find data/postgres -type f 2>/dev/null | wc -l)
+    if [ "$FINAL_FILE_COUNT" -gt 0 ]; then
+        echo "  💾 Database data preserved successfully ($FINAL_FILE_COUNT files)"
+        
+        # Show a sample of preserved files for verification
+        echo "  📄 Sample preserved files:"
+        find data/postgres -type f | head -3 | sed 's/^/     /'
     else
         echo "  ⚠️  Database will be recreated (no existing data found)"
+        echo "  📁 Directory contents:"
+        ls -la data/ 2>/dev/null | sed 's/^/     /' || echo "     (data directory not found)"
     fi
     echo ""
 }
