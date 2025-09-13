@@ -78,6 +78,21 @@ update_deployment() {
     
     # Check local data directory
     if [ -d "data/postgres" ]; then
+        # Fix permissions first to ensure we can read the directory
+        echo "  🔧 Fixing PostgreSQL directory permissions..."
+        
+        # Try with sudo first
+        if sudo chown -R $(id -u):$(id -g) data/postgres 2>/dev/null; then
+            echo "  ✅ Changed ownership successfully"
+            sudo chmod -R 755 data/postgres 2>/dev/null
+            echo "  ✅ Changed permissions successfully"
+        else
+            echo "  ⚠️  Cannot change ownership (trying without sudo)"
+            # Try without sudo
+            chown -R $(id -u):$(id -g) data/postgres 2>/dev/null || echo "  ⚠️  No permission to change ownership"
+            chmod -R 755 data/postgres 2>/dev/null || echo "  ⚠️  No permission to change permissions"
+        fi
+        
         FILE_COUNT=$(find data/postgres -type f 2>/dev/null | wc -l)
         echo "  📁 Local data/postgres exists with $FILE_COUNT files"
         if [ "$FILE_COUNT" -gt 0 ]; then
@@ -85,7 +100,10 @@ update_deployment() {
             DATA_EXISTS=true
             MIGRATED_FROM_VOLUME=false
         else
-            echo "  ⚠️  data/postgres directory exists but is empty"
+            echo "  ⚠️  data/postgres directory exists but is empty or unreadable"
+            # Try to list directory contents to debug
+            echo "  🔍 Directory listing attempt:"
+            ls -la data/postgres 2>/dev/null | head -5 | sed 's/^/     /' || echo "     (cannot list directory contents)"
             DATA_EXISTS=false
             MIGRATED_FROM_VOLUME=false
         fi
@@ -179,8 +197,18 @@ update_deployment() {
     # Backup data directory BEFORE any operations
     if [ -d "data" ] && [ "$(find data -type f 2>/dev/null | wc -l)" -gt 0 ]; then
         echo "  💾 Creating safety backup of entire data directory..."
-        cp -r data data_backup_$(date +%Y%m%d_%H%M%S)
-        echo "  ✅ Data directory backed up for safety"
+        
+        # Fix permissions before backup
+        if sudo chown -R $(id -u):$(id -g) data 2>/dev/null; then
+            echo "  🔧 Fixed data directory permissions for backup"
+        fi
+        
+        if cp -r data data_backup_$(date +%Y%m%d_%H%M%S) 2>/dev/null; then
+            echo "  ✅ Data directory backed up for safety"
+        else
+            echo "  ⚠️  Could not create full backup, trying with sudo..."
+            sudo cp -r data data_backup_$(date +%Y%m%d_%H%M%S) 2>/dev/null || echo "  ❌ Backup failed"
+        fi
     fi
     
     # Create directories ONLY if they don't exist (never overwrite!)
@@ -226,7 +254,16 @@ update_deployment() {
     # Temporarily move data directory to safety
     if [ -d "$deploy_dir/data" ]; then
         echo "  🛡️  Moving data directory to safety during file copy..."
-        mv "$deploy_dir/data" "$deploy_dir/data_temp_safe"
+        
+        # Fix permissions before moving
+        sudo chown -R $(id -u):$(id -g) "$deploy_dir/data" 2>/dev/null || echo "  ⚠️  Could not fix permissions"
+        
+        if mv "$deploy_dir/data" "$deploy_dir/data_temp_safe" 2>/dev/null; then
+            echo "  ✅ Data moved to safety successfully"
+        else
+            echo "  ⚠️  Could not move data, trying with sudo..."
+            sudo mv "$deploy_dir/data" "$deploy_dir/data_temp_safe" 2>/dev/null || echo "  ❌ Failed to move data to safety"
+        fi
     fi
     
     # Copy core application files
@@ -238,7 +275,17 @@ update_deployment() {
     # Restore data directory from safety
     if [ -d "$deploy_dir/data_temp_safe" ]; then
         echo "  🛡️  Restoring data directory from safety..."
-        mv "$deploy_dir/data_temp_safe" "$deploy_dir/data"
+        
+        if mv "$deploy_dir/data_temp_safe" "$deploy_dir/data" 2>/dev/null; then
+            echo "  ✅ Data directory restored successfully"
+        else
+            echo "  ⚠️  Could not restore data, trying with sudo..."
+            sudo mv "$deploy_dir/data_temp_safe" "$deploy_dir/data" 2>/dev/null || echo "  ❌ Failed to restore data"
+        fi
+        
+        # Fix permissions after restore
+        sudo chown -R $(id -u):$(id -g) "$deploy_dir/data" 2>/dev/null || echo "  ⚠️  Could not fix permissions after restore"
+        
         POSTGRES_FILES_RESTORED=$(find "$deploy_dir/data/postgres" -type f 2>/dev/null | wc -l)
         echo "  ✅ Data directory restored with $POSTGRES_FILES_RESTORED PostgreSQL files"
     fi
