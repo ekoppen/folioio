@@ -82,7 +82,7 @@ router.post('/send-contact', async (req, res) => {
     
     if ((serviceType === 'gmail' && GMAIL_USER && GMAIL_APP_PASSWORD) || (!RESEND_API_KEY && GMAIL_USER && GMAIL_APP_PASSWORD)) {
       console.log('📧 Using Gmail SMTP for email service');
-      transporter = nodemailer.createTransporter({
+      transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
           user: GMAIL_USER,
