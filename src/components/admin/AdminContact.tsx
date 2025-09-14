@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getBackendAdapter } from '@/config/backend-config';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, Phone, MapPin, MessageSquare, Eye, EyeOff, Send, Settings, Inbox } from 'lucide-react';
+import { Loader2, Send, Settings, Inbox } from 'lucide-react';
 import AdminContactMessages from './AdminContactMessages';
 
 interface ContactSettings {
@@ -30,16 +30,6 @@ interface ContactSettings {
   resend_api_key?: string;
 }
 
-interface ContactMessage {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  subject?: string;
-  message: string;
-  is_read: boolean;
-  created_at: string;
-}
 
 const AdminContact = () => {
   const [settings, setSettings] = useState<ContactSettings>({
@@ -53,7 +43,6 @@ const AdminContact = () => {
     gmail_app_password: '',
     resend_api_key: ''
   });
-  const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -62,7 +51,7 @@ const AdminContact = () => {
 
   useEffect(() => {
     fetchSettings();
-    fetchMessages();
+    fetchUnreadCount();
   }, []);
 
   const fetchSettings = async () => {
@@ -106,10 +95,8 @@ const AdminContact = () => {
     }
   };
 
-  const fetchMessages = async () => {
+  const fetchUnreadCount = async () => {
     try {
-      const backend = getBackendAdapter();
-
       // Fetch unread count for tab badge
       const response = await fetch('/api/email/messages?limit=1&filter=unread', {
         headers: {
@@ -121,17 +108,8 @@ const AdminContact = () => {
         const data = await response.json();
         setUnreadCount(data.stats?.unreadCount || 0);
       }
-
-      // Keep existing message fetching for backward compatibility
-      const { data, error } = await backend
-        .from('contact_messages')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      if (data) setMessages(data);
     } catch (error) {
-      console.error('Error fetching contact messages:', error);
+      console.error('Error fetching unread count:', error);
     }
   };
 
@@ -258,25 +236,6 @@ Sent from your portfolio admin panel.`
     }
   };
 
-  const markAsRead = async (messageId: string, isRead: boolean) => {
-    try {
-      const backend = getBackendAdapter();
-      const { error } = await backend
-        .from('contact_messages')
-        .update({ is_read: isRead })
-        .eq('id', messageId);
-
-      if (error) throw error;
-
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === messageId ? { ...msg, is_read: isRead } : msg
-        )
-      );
-    } catch (error) {
-      console.error('Error updating message status:', error);
-    }
-  };
 
   if (loading) {
     return (
@@ -299,12 +258,8 @@ Sent from your portfolio admin panel.`
         </div>
       </div>
 
-      <Tabs defaultValue="settings" className="space-y-6">
+      <Tabs defaultValue="messages" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            Instellingen
-          </TabsTrigger>
           <TabsTrigger value="messages" className="flex items-center gap-2">
             <Inbox className="w-4 h-4" />
             Berichten
@@ -313,6 +268,10 @@ Sent from your portfolio admin panel.`
                 {unreadCount}
               </Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Instellingen
           </TabsTrigger>
         </TabsList>
 
@@ -521,69 +480,6 @@ Sent from your portfolio admin panel.`
         </CardContent>
       </Card>
 
-      {/* Contact Messages */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
-            Contactberichten ({messages.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {messages.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">Nog geen berichten ontvangen.</p>
-          ) : (
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <Card key={message.id} className={`${!message.is_read ? 'border-primary/50' : ''}`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold">{message.name}</h4>
-                        <Badge variant={message.is_read ? "secondary" : "default"}>
-                          {message.is_read ? "Gelezen" : "Nieuw"}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => markAsRead(message.id, !message.is_read)}
-                        >
-                          {message.is_read ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </Button>
-                        <span className="text-sm text-muted-foreground">
-                          {new Date(message.created_at).toLocaleDateString('nl-NL')}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Mail className="w-3 h-3" />
-                        {message.email}
-                      </div>
-                      {message.phone && (
-                        <div className="flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
-                          {message.phone}
-                        </div>
-                      )}
-                      {message.subject && (
-                        <div className="font-medium">
-                          Onderwerp: {message.subject}
-                        </div>
-                      )}
-                    </div>
-                    
-                    <p className="text-sm whitespace-pre-wrap">{message.message}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
         </TabsContent>
 
         <TabsContent value="messages">
