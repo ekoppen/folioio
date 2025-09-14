@@ -199,7 +199,7 @@ const AdminContact = () => {
       await updateSettings();
       
       // Send test email via contact form endpoint
-      const response = await fetch('/api/contact', {
+      const response = await fetch('/api/send-contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
