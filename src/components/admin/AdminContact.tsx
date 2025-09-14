@@ -255,6 +255,15 @@ Sent from your portfolio admin panel.`
               Beheer contact instellingen en berichten
             </p>
           </div>
+          <Button
+            onClick={updateSettings}
+            disabled={updating}
+            className="flex items-center gap-2"
+            style={{ backgroundColor: 'hsl(var(--dynamic-accent))', borderColor: 'hsl(var(--dynamic-accent))' }}
+          >
+            {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+            {updating ? 'Opslaan...' : 'Instellingen Opslaan'}
+          </Button>
         </div>
       </div>
 
@@ -459,12 +468,7 @@ Sent from your portfolio admin panel.`
             </div>
           )}
 
-          <div className="flex gap-3">
-            <Button onClick={updateSettings} disabled={updating}>
-              {updating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Instellingen Opslaan
-            </Button>
-            
+          <div className="flex justify-start">
             <Button 
               variant="outline" 
               onClick={sendTestEmail} 
