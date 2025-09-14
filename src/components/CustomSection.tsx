@@ -86,7 +86,7 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
             <div className="text-3xl font-bold text-accent mb-2">
               {item.value}
             </div>
-            <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+            <div className="text-sm font-bold text-gray-900 dark:text-white">
               {item.label}
             </div>
           </div>
