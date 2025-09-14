@@ -7,10 +7,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getBackendAdapter } from '@/config/backend-config';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, Phone, MapPin, MessageSquare, Eye, EyeOff, Send } from 'lucide-react';
+import { Loader2, Mail, Phone, MapPin, MessageSquare, Eye, EyeOff, Send, Settings, Inbox } from 'lucide-react';
+import AdminContactMessages from './AdminContactMessages';
 
 interface ContactSettings {
   contact_email: string;
@@ -52,6 +54,7 @@ const AdminContact = () => {
     resend_api_key: ''
   });
   const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -106,6 +109,20 @@ const AdminContact = () => {
   const fetchMessages = async () => {
     try {
       const backend = getBackendAdapter();
+
+      // Fetch unread count for tab badge
+      const response = await fetch('/api/email/messages?limit=1&filter=unread', {
+        headers: {
+          'Authorization': `Bearer ${backend.auth.getSession()?.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.stats?.unreadCount || 0);
+      }
+
+      // Keep existing message fetching for backward compatibility
       const { data, error } = await backend
         .from('contact_messages')
         .select('*')
@@ -271,8 +288,37 @@ Sent from your portfolio admin panel.`
 
   return (
     <div className="space-y-6">
-      {/* Contact Settings */}
-      <Card>
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b mb-6 -mx-6 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Contact Beheer</h2>
+            <p className="text-muted-foreground">
+              Beheer contact instellingen en berichten
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <Tabs defaultValue="settings" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Instellingen
+          </TabsTrigger>
+          <TabsTrigger value="messages" className="flex items-center gap-2">
+            <Inbox className="w-4 h-4" />
+            Berichten
+            {unreadCount > 0 && (
+              <Badge variant="destructive" className="ml-1 h-5 text-xs">
+                {unreadCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="settings">
+          {/* Contact Settings */}
+          <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mail className="w-5 h-5" />
@@ -538,6 +584,12 @@ Sent from your portfolio admin panel.`
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="messages">
+          <AdminContactMessages />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

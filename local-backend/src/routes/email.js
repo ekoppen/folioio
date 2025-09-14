@@ -217,7 +217,7 @@ router.post('/send-contact', async (req, res) => {
   }
 });
 
-// Get contact messages (admin only)
+// Get contact messages with pagination, search and filtering (admin only)
 router.get('/messages', async (req, res) => {
   try {
     // Get auth token
@@ -228,33 +228,87 @@ router.get('/messages', async (req, res) => {
 
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Check if user is admin
     const userResult = await query('SELECT role FROM profiles WHERE id = $1', [decoded.sub]);
     if (!userResult.rows.length || userResult.rows[0].role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    // Get contact messages
+    // Parse query parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const filter = req.query.filter || 'all'; // all, unread, read
+    const sortBy = req.query.sortBy || 'created_at';
+    const sortOrder = req.query.sortOrder || 'desc';
+
+    const offset = (page - 1) * limit;
+
+    // Build WHERE clause based on filters
+    let whereClause = '1=1';
+    const queryParams = [];
+    let paramIndex = 1;
+
+    if (search) {
+      whereClause += ` AND (name ILIKE $${paramIndex} OR email ILIKE $${paramIndex} OR subject ILIKE $${paramIndex} OR message ILIKE $${paramIndex})`;
+      queryParams.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    if (filter === 'unread') {
+      whereClause += ` AND is_read = false`;
+    } else if (filter === 'read') {
+      whereClause += ` AND is_read = true`;
+    }
+
+    // Get total count for pagination
+    const countResult = await query(`
+      SELECT COUNT(*) as total
+      FROM contact_messages
+      WHERE ${whereClause}
+    `, queryParams);
+
+    const total = parseInt(countResult.rows[0].total);
+    const totalPages = Math.ceil(total / limit);
+
+    // Get messages with pagination
     const messagesResult = await query(`
-      SELECT 
-        id, 
-        name, 
-        email, 
-        phone, 
-        subject, 
-        message, 
-        is_read, 
+      SELECT
+        id,
+        name,
+        email,
+        phone,
+        subject,
+        message,
+        is_read,
         created_at,
         updated_at
-      FROM contact_messages 
-      ORDER BY created_at DESC
-      LIMIT 100
-    `);
+      FROM contact_messages
+      WHERE ${whereClause}
+      ORDER BY ${sortBy} ${sortOrder.toUpperCase()}
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `, [...queryParams, limit, offset]);
+
+    // Get unread count for sidebar badge
+    const unreadResult = await query('SELECT COUNT(*) as unread FROM contact_messages WHERE is_read = false');
+    const unreadCount = parseInt(unreadResult.rows[0].unread);
 
     res.json({
       success: true,
-      messages: messagesResult.rows
+      messages: messagesResult.rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      },
+      stats: {
+        unreadCount,
+        totalCount: total
+      }
     });
 
   } catch (error) {
@@ -305,6 +359,252 @@ router.patch('/messages/:id/read', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error updating message:', error);
+    res.status(500).json({
+      error: error.message || 'Internal server error'
+    });
+  }
+});
+
+// Bulk mark messages as read (admin only)
+router.patch('/messages/bulk/read', async (req, res) => {
+  try {
+    const { messageIds, markAsRead } = req.body;
+
+    // Get auth token
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No valid authorization token provided' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Check if user is admin
+    const userResult = await query('SELECT role FROM profiles WHERE id = $1', [decoded.sub]);
+    if (!userResult.rows.length || userResult.rows[0].role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    if (!Array.isArray(messageIds) || messageIds.length === 0) {
+      return res.status(400).json({ error: 'messageIds array is required' });
+    }
+
+    // Build the update query for multiple IDs
+    const placeholders = messageIds.map((_, index) => `$${index + 2}`).join(',');
+    const updateResult = await query(`
+      UPDATE contact_messages
+      SET is_read = $1, updated_at = NOW()
+      WHERE id IN (${placeholders})
+      RETURNING id
+    `, [markAsRead, ...messageIds]);
+
+    res.json({
+      success: true,
+      updatedCount: updateResult.rows.length,
+      messageIds: updateResult.rows.map(row => row.id)
+    });
+
+  } catch (error) {
+    console.error('❌ Error bulk updating messages:', error);
+    res.status(500).json({
+      error: error.message || 'Internal server error'
+    });
+  }
+});
+
+// Reply to contact message (admin only)
+router.post('/messages/:id/reply', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { subject, message } = req.body;
+
+    // Get auth token
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No valid authorization token provided' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Check if user is admin
+    const userResult = await query('SELECT role FROM profiles WHERE id = $1', [decoded.sub]);
+    if (!userResult.rows.length || userResult.rows[0].role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    // Validate required fields
+    if (!subject || !message) {
+      return res.status(400).json({
+        error: 'Subject and message are required'
+      });
+    }
+
+    // Get original message details
+    const originalResult = await query(`
+      SELECT name, email, subject as original_subject
+      FROM contact_messages
+      WHERE id = $1
+    `, [id]);
+
+    if (!originalResult.rows.length) {
+      return res.status(404).json({ error: 'Original message not found' });
+    }
+
+    const original = originalResult.rows[0];
+
+    // Get contact settings for email configuration
+    const settingsResult = await query(`
+      SELECT
+        email_service_type,
+        gmail_user,
+        gmail_app_password,
+        resend_api_key
+      FROM site_settings
+      LIMIT 1
+    `);
+
+    const settings = settingsResult.rows[0];
+
+    if (!settings) {
+      return res.status(500).json({ error: 'Email settings not configured' });
+    }
+
+    // Get email service configuration
+    const serviceType = settings?.email_service_type || 'gmail';
+    const GMAIL_USER = settings?.gmail_user || process.env.GMAIL_USER;
+    const GMAIL_APP_PASSWORD = settings?.gmail_app_password || process.env.GMAIL_APP_PASSWORD;
+    const RESEND_API_KEY = settings?.resend_api_key || process.env.RESEND_API_KEY;
+
+    if (!GMAIL_USER && !RESEND_API_KEY) {
+      return res.status(500).json({
+        error: 'Email service not configured. Please configure Gmail or Resend in contact settings.'
+      });
+    }
+
+    // Create email transporter
+    let transporter = null;
+    let resend = null;
+
+    if ((serviceType === 'gmail' && GMAIL_USER && GMAIL_APP_PASSWORD) || (!RESEND_API_KEY && GMAIL_USER && GMAIL_APP_PASSWORD)) {
+      console.log('📧 Using Gmail SMTP for reply');
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: GMAIL_USER,
+          pass: GMAIL_APP_PASSWORD
+        }
+      });
+    } else if ((serviceType === 'resend' && RESEND_API_KEY) || (!GMAIL_USER && RESEND_API_KEY)) {
+      console.log('📧 Using Resend for reply');
+      const { Resend } = require('resend');
+      resend = new Resend(RESEND_API_KEY);
+    }
+
+    // Send reply email
+    const emailContent = {
+      subject: subject,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Antwoord op je bericht</h2>
+          <p>Hallo ${original.name},</p>
+
+          <div style="background-color: #f9f9f9; padding: 20px; border-left: 4px solid #007bff; margin: 20px 0;">
+            ${message.replace(/\n/g, '<br>')}
+          </div>
+
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+
+          <div style="color: #666; font-size: 14px;">
+            <p><strong>Je oorspronkelijke bericht:</strong></p>
+            <p><em>Onderwerp: ${original.original_subject}</em></p>
+          </div>
+
+          <br>
+          <p>Met vriendelijke groet,<br>Portfolio Team</p>
+        </div>
+      `
+    };
+
+    let emailResponse;
+
+    if (transporter) {
+      // Gmail SMTP
+      emailResponse = await transporter.sendMail({
+        from: `"Portfolio" <${GMAIL_USER}>`,
+        to: original.email,
+        ...emailContent
+      });
+    } else if (resend) {
+      // Resend
+      emailResponse = await resend.emails.send({
+        from: "Portfolio <onboarding@resend.dev>",
+        to: [original.email],
+        ...emailContent
+      });
+    }
+
+    // Mark original message as read
+    await query(`
+      UPDATE contact_messages
+      SET is_read = true, updated_at = NOW()
+      WHERE id = $1
+    `, [id]);
+
+    console.log(`✅ Reply sent to: ${original.email} for message ${id}`);
+
+    res.json({
+      success: true,
+      message: 'Reply sent successfully',
+      emailResponse
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending reply:', error);
+    res.status(500).json({
+      error: error.message || 'Internal server error'
+    });
+  }
+});
+
+// Delete contact message (admin only)
+router.delete('/messages/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get auth token
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No valid authorization token provided' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Check if user is admin
+    const userResult = await query('SELECT role FROM profiles WHERE id = $1', [decoded.sub]);
+    if (!userResult.rows.length || userResult.rows[0].role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    // Delete the message
+    const deleteResult = await query(`
+      DELETE FROM contact_messages
+      WHERE id = $1
+      RETURNING *
+    `, [id]);
+
+    if (!deleteResult.rows.length) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Message deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('❌ Error deleting message:', error);
     res.status(500).json({
       error: error.message || 'Internal server error'
     });
