@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAccentColor } from '@/hooks/useAccentColor';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useFonts } from '@/hooks/useFonts';
 
 interface CustomSectionData {
   id: string;
@@ -52,8 +53,9 @@ const iconMap: Record<string, any> = {
 const CustomSection = ({ sectionData }: CustomSectionProps) => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const { t } = useTranslation();
-  
-  useAccentColor(); // Initialize dynamic accent color
+  const { fontSettings } = useFonts();
+
+  const accentColor = useAccentColor(); // Initialize and get dynamic accent color
 
   const handleButtonClick = () => {
     if (!sectionData.button_link) return;
@@ -122,9 +124,26 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
                 <div className="p-2 bg-accent/10 rounded-lg">
                   <ServiceIcon className="w-6 h-6 text-accent" />
                 </div>
-                <h3 className="font-semibold">{item.title}</h3>
+                <h3
+                  className="font-semibold"
+                  style={{
+                    fontFamily: fontSettings.title_font_family ?
+                      `'${fontSettings.title_font_family}', serif` :
+                      'var(--font-title, "Playfair Display", serif)',
+                    color: accentColor
+                  }}
+                >
+                  {item.title}
+                </h3>
               </div>
-              <p className="text-muted-foreground text-sm leading-relaxed">
+              <p
+                className="text-muted-foreground text-sm leading-relaxed"
+                style={{
+                  fontFamily: fontSettings.content_font_family ?
+                    `'${fontSettings.content_font_family}', sans-serif` :
+                    'var(--font-content, "Roboto", sans-serif)'
+                }}
+              >
                 {item.description}
               </p>
             </CardContent>
@@ -189,7 +208,16 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
 
           {/* Section Title */}
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
+            <h2
+              className="text-4xl md:text-5xl font-bold mb-6"
+              style={{
+                fontFamily: fontSettings.title_font_family ?
+                  `'${fontSettings.title_font_family}', serif` :
+                  'var(--font-title, "Playfair Display", serif)',
+                color: accentColor,
+                textShadow: '2px 2px 4px rgba(0,0,0,0.1)'
+              }}
+            >
               {sectionData.title}
             </h2>
           </div>
@@ -199,7 +227,14 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
             {/* Left Column - Text Content */}
             <div className="space-y-6">
               <div className="prose prose-lg max-w-none dark:prose-invert">
-                <p className="text-muted-foreground leading-relaxed">
+                <p
+                  className="text-muted-foreground leading-relaxed"
+                  style={{
+                    fontFamily: fontSettings.content_font_family ?
+                      `'${fontSettings.content_font_family}', sans-serif` :
+                      'var(--font-content, "Roboto", sans-serif)'
+                  }}
+                >
                   {sectionData.content_left}
                 </p>
               </div>
