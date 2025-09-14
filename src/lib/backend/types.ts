@@ -87,6 +87,7 @@ export interface BackendAdapter {
     signIn(email: string, password: string): Promise<AuthResult>;
     signUp(email: string, password: string, options?: SignUpOptions): Promise<AuthResult>;
     signOut(): Promise<void>;
+    changePassword(currentPassword: string, newPassword: string): Promise<{ error?: any }>;
     onAuthStateChange(callback: AuthCallback): Subscription;
     getSession(): Promise<Session | null>;
     getUser(): Promise<{ user?: any; error?: any }>;

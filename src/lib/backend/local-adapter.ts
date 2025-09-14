@@ -389,6 +389,28 @@ export class LocalAdapter implements BackendAdapter {
       this.authCallbacks.forEach(callback => callback('SIGNED_OUT', null));
     },
 
+    changePassword: async (currentPassword: string, newPassword: string): Promise<{ error?: any }> => {
+      try {
+        const response = await fetch(`${this.config.apiUrl}/auth/change-password`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.token}`
+          },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          return { error };
+        }
+
+        return {};
+      } catch (error) {
+        return { error };
+      }
+    },
+
     onAuthStateChange: (callback: AuthCallback): Subscription => {
       this.authCallbacks.push(callback);
       return {

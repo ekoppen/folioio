@@ -10,6 +10,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ error?: any }>;
   isAdmin: boolean;
   isAuthenticated: boolean;
 }
@@ -162,6 +163,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      const result = await backend.auth.changePassword(currentPassword, newPassword);
+
+      if (result.error) {
+        toast({
+          variant: "destructive",
+          title: "Password change failed",
+          description: result.error.message || "Failed to change password"
+        });
+      } else {
+        toast({
+          title: "Password changed",
+          description: "Your password has been successfully updated."
+        });
+      }
+
+      return { error: result.error };
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to change password"
+      });
+      return { error };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -170,6 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
+    changePassword,
     isAdmin,
     isAuthenticated,
   };
