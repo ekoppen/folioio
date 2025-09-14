@@ -113,7 +113,7 @@ const AdminContact = () => {
       // Fetch unread count for tab badge
       const response = await fetch('/api/email/messages?limit=1&filter=unread', {
         headers: {
-          'Authorization': `Bearer ${backend.auth.getSession()?.access_token}`
+          'Authorization': `Bearer ${localStorage.getItem('local_auth_token')}`
         }
       });
 

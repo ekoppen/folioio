@@ -106,7 +106,7 @@ const AdminContactMessages = () => {
 
       const response = await fetch(`/api/email/messages?${params}`, {
         headers: {
-          'Authorization': `Bearer ${backend.auth.getSession()?.access_token}`
+          'Authorization': `Bearer ${localStorage.getItem('local_auth_token')}`
         }
       });
 
@@ -137,7 +137,7 @@ const AdminContactMessages = () => {
       const response = await fetch(`/api/email/messages/${messageId}/read`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${backend.auth.getSession()?.access_token}`,
+          'Authorization': `Bearer ${localStorage.getItem('local_auth_token')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ is_read: isRead })
@@ -181,7 +181,7 @@ const AdminContactMessages = () => {
       const response = await fetch('/api/email/messages/bulk/read', {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${backend.auth.getSession()?.access_token}`,
+          'Authorization': `Bearer ${localStorage.getItem('local_auth_token')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -230,7 +230,7 @@ const AdminContactMessages = () => {
       const response = await fetch(`/api/email/messages/${messageId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${backend.auth.getSession()?.access_token}`
+          'Authorization': `Bearer ${localStorage.getItem('local_auth_token')}`
         }
       });
 
@@ -281,7 +281,7 @@ const AdminContactMessages = () => {
       const response = await fetch(`/api/email/messages/${replyingTo.id}/reply`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${backend.auth.getSession()?.access_token}`,
+          'Authorization': `Bearer ${localStorage.getItem('local_auth_token')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
