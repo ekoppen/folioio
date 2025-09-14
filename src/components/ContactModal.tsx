@@ -80,19 +80,28 @@ export const ContactModal = ({ open, onOpenChange }: ContactModalProps) => {
     setIsSubmitting(true);
     
     try {
-      // Save to database
+      // Use local backend email endpoint instead of Supabase Edge Function
       const backend = getBackendAdapter();
-      const { error } = await backend
-        .from('contact_messages')
-        .insert({
+      const apiUrl = backend.getConfig().apiUrl;
+      const response = await fetch(`${apiUrl}/email/send-contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          phone: formData.phone || null,
-          subject: formData.subject || null,
-          message: formData.message
-        });
+          phone: formData.phone || undefined,
+          subject: formData.subject || undefined,
+          message: formData.message,
+        })
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to send message');
+      }
 
       toast({
         title: t('contact.message_sent', 'Bericht verzonden!'),
