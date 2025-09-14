@@ -611,4 +611,57 @@ router.delete('/messages/:id', async (req, res) => {
   }
 });
 
+// Debug route to test email functionality
+router.post('/test-send', async (req, res) => {
+  try {
+    console.log('🔍 Test send route hit with body:', req.body);
+
+    // Try to send a simple test email
+    const testData = {
+      name: 'Test User',
+      email: 'test@example.com',
+      subject: 'Test Contact Form',
+      message: 'This is a test message from the contact form debug route.'
+    };
+
+    // Get settings
+    const settingsResult = await query(`
+      SELECT
+        notification_email,
+        email_service_type,
+        gmail_user,
+        gmail_app_password,
+        resend_api_key
+      FROM site_settings
+      LIMIT 1
+    `);
+
+    const settings = settingsResult.rows[0];
+    console.log('📧 Email settings:', {
+      hasGmailUser: !!settings?.gmail_user,
+      hasGmailPassword: !!settings?.gmail_app_password,
+      serviceType: settings?.email_service_type,
+      notificationEmail: settings?.notification_email
+    });
+
+    res.json({
+      success: true,
+      message: 'Debug route working',
+      settings: {
+        hasGmailUser: !!settings?.gmail_user,
+        hasGmailPassword: !!settings?.gmail_app_password,
+        serviceType: settings?.email_service_type,
+        notificationEmail: settings?.notification_email
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error in test send route:', error);
+    res.status(500).json({
+      error: error.message,
+      success: false
+    });
+  }
+});
+
 module.exports = router;
