@@ -11,7 +11,7 @@ import { LogOut, Settings, Image, FileText, Folder, Edit, User, Phone, Globe, La
 import AdminFooter from '@/components/admin/AdminFooter';
 import AdminAbout from '@/components/admin/AdminAbout';
 import AdminContact from '@/components/admin/AdminContact';
-import AdminLanguages from '@/components/admin/AdminLanguages';
+// import AdminLanguages from '@/components/admin/AdminLanguages';
 import AdminCustomSections from '@/components/admin/AdminCustomSections';
 
 const Admin = () => {
@@ -93,10 +93,10 @@ const Admin = () => {
               <Phone className="w-4 h-4" />
               Contact
             </TabsTrigger>
-            <TabsTrigger value="languages" className="flex items-center gap-2">
+            {/* <TabsTrigger value="languages" className="flex items-center gap-2">
               <Globe className="w-4 h-4" />
               Talen
-            </TabsTrigger>
+            </TabsTrigger> */}
             <TabsTrigger value="custom" className="flex items-center gap-2">
               <Layers className="w-4 h-4" />
               Custom
@@ -127,9 +127,9 @@ const Admin = () => {
             <AdminContact />
           </TabsContent>
           
-          <TabsContent value="languages">
+          {/* <TabsContent value="languages">
             <AdminLanguages />
-          </TabsContent>
+          </TabsContent> */}
           
           <TabsContent value="custom">
             <AdminCustomSections />
