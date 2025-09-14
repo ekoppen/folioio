@@ -22,8 +22,12 @@ interface AboutSettings {
     number: string;
     label: string;
   }>;
-  quote_text: string;
-  quote_author: string;
+  quotes: Array<{
+    text: string;
+    author: string;
+  }>;
+  quote_text?: string;  // Keep for backward compatibility
+  quote_author?: string; // Keep for backward compatibility
   profile_photo_url?: string;
 }
 
@@ -64,12 +68,24 @@ const About = () => {
       { number: '25+', label: 'Tevreden Klanten' },
       { number: '5+', label: 'Jaar Ervaring' }
     ],
-    quote_text: 'Creativiteit is niet wat je ziet, maar wat je anderen laat zien.',
-    quote_author: 'Edgar Degas',
+    quotes: [
+      { text: 'Creativiteit is niet wat je ziet, maar wat je anderen laat zien.', author: 'Edgar Degas' }
+    ],
     profile_photo_url: undefined
   });
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   
   useAccentColor(); // Initialize dynamic accent color
+
+  // Auto-cycle through quotes if multiple
+  useEffect(() => {
+    if (settings.quotes.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentQuoteIndex((prev) => (prev + 1) % settings.quotes.length);
+      }, 5000); // Change quote every 5 seconds
+      return () => clearInterval(interval);
+    }
+  }, [settings.quotes.length]);
 
   useEffect(() => {
     fetchSettings();
@@ -92,6 +108,13 @@ const About = () => {
       if (record) {
         console.log('About settings record:', record);
         console.log('Profile photo URL from DB:', record.profile_photo_url);
+
+        // Handle backward compatibility: convert old quote format to new quotes array
+        let quotes = (record.quotes as AboutSettings['quotes']) || [];
+        if (quotes.length === 0 && record.quote_text) {
+          quotes = [{ text: record.quote_text, author: record.quote_author || '' }];
+        }
+
         setSettings({
           main_title: record.main_title,
           intro_text: record.intro_text,
@@ -99,8 +122,7 @@ const About = () => {
           skills: (record.skills as string[]) || [],
           services: (record.services as AboutSettings['services']) || [],
           stats: (record.stats as AboutSettings['stats']) || [],
-          quote_text: record.quote_text,
-          quote_author: record.quote_author,
+          quotes: quotes,
           profile_photo_url: record.profile_photo_url
         });
       }
@@ -204,15 +226,36 @@ const About = () => {
             </div>
 
             {/* Quote */}
-            <Card className="mt-8" style={{ backgroundColor: 'hsl(var(--dynamic-accent) / 0.05)', borderColor: 'hsl(var(--dynamic-accent) / 0.2)' }}>
-              <CardContent className="p-6 text-center">
-                <Heart className="w-8 h-8 mx-auto mb-4" style={{ color: 'hsl(var(--dynamic-accent))' }} />
-                <blockquote className="text-lg font-medium mb-2 font-content">
-                  "{t('about_settings.quote_text', settings.quote_text)}"
-                </blockquote>
-                <cite className="text-sm text-muted-foreground font-content">- {t('about_settings.quote_author', settings.quote_author)}</cite>
-              </CardContent>
-            </Card>
+            {settings.quotes.length > 0 && (
+              <Card className="mt-8" style={{ backgroundColor: 'hsl(var(--dynamic-accent) / 0.05)', borderColor: 'hsl(var(--dynamic-accent) / 0.2)' }}>
+                <CardContent className="p-6 text-center">
+                  <Heart className="w-8 h-8 mx-auto mb-4" style={{ color: 'hsl(var(--dynamic-accent))' }} />
+                  <div className="min-h-[80px]">
+                    <blockquote className="text-lg font-medium mb-2 font-content transition-opacity duration-500">
+                      "{t('about_settings.quote_text', settings.quotes[currentQuoteIndex].text)}"
+                    </blockquote>
+                    <cite className="text-sm text-muted-foreground font-content">- {t('about_settings.quote_author', settings.quotes[currentQuoteIndex].author)}</cite>
+                  </div>
+                  {settings.quotes.length > 1 && (
+                    <div className="flex justify-center gap-1 mt-4">
+                      {settings.quotes.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentQuoteIndex(index)}
+                          className="w-2 h-2 rounded-full transition-all duration-300"
+                          style={{
+                            backgroundColor: index === currentQuoteIndex
+                              ? 'hsl(var(--dynamic-accent))'
+                              : 'hsl(var(--dynamic-accent) / 0.3)'
+                          }}
+                          aria-label={`Go to quote ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Contact Button */}
             <div className="mt-8 text-center">

@@ -24,8 +24,12 @@ interface AboutSettings {
     number: string;
     label: string;
   }>;
-  quote_text: string;
-  quote_author: string;
+  quotes: Array<{
+    text: string;
+    author: string;
+  }>;
+  quote_text?: string;  // Keep for backward compatibility
+  quote_author?: string; // Keep for backward compatibility
   profile_photo_url?: string;
 }
 
@@ -58,8 +62,9 @@ const AdminAbout = () => {
       { number: '25+', label: 'Tevreden Klanten' },
       { number: '5+', label: 'Jaar Ervaring' }
     ],
-    quote_text: 'Creativiteit is niet wat je ziet, maar wat je anderen laat zien.',
-    quote_author: 'Edgar Degas',
+    quotes: [
+      { text: 'Creativiteit is niet wat je ziet, maar wat je anderen laat zien.', author: 'Edgar Degas' }
+    ],
     profile_photo_url: undefined
   });
   
@@ -85,6 +90,12 @@ const AdminAbout = () => {
       if (error) throw error;
       
       if (data) {
+        // Handle backward compatibility: convert old quote format to new quotes array
+        let quotes = (data.quotes as AboutSettings['quotes']) || [];
+        if (quotes.length === 0 && data.quote_text) {
+          quotes = [{ text: data.quote_text, author: data.quote_author || '' }];
+        }
+
         setSettings({
           id: data.id,
           main_title: data.main_title,
@@ -93,8 +104,7 @@ const AdminAbout = () => {
           skills: (data.skills as string[]) || [],
           services: (data.services as AboutSettings['services']) || [],
           stats: (data.stats as AboutSettings['stats']) || [],
-          quote_text: data.quote_text,
-          quote_author: data.quote_author,
+          quotes: quotes,
           profile_photo_url: data.profile_photo_url
         });
       }
@@ -119,8 +129,10 @@ const AdminAbout = () => {
         skills: settings.skills,
         services: settings.services,
         stats: settings.stats,
-        quote_text: settings.quote_text,
-        quote_author: settings.quote_author,
+        quotes: settings.quotes,
+        // Keep backward compatibility: also save first quote as quote_text/quote_author
+        quote_text: settings.quotes.length > 0 ? settings.quotes[0].text : '',
+        quote_author: settings.quotes.length > 0 ? settings.quotes[0].author : '',
         profile_photo_url: settings.profile_photo_url
       };
 
@@ -270,12 +282,49 @@ const AdminAbout = () => {
     }));
   };
 
+  const addStat = () => {
+    setSettings(prev => ({
+      ...prev,
+      stats: [...prev.stats, { number: '0', label: 'Nieuw Item' }]
+    }));
+  };
+
   const updateStat = (index: number, field: 'number' | 'label', value: string) => {
     setSettings(prev => ({
       ...prev,
-      stats: prev.stats.map((stat, i) => 
+      stats: prev.stats.map((stat, i) =>
         i === index ? { ...stat, [field]: value } : stat
       )
+    }));
+  };
+
+  const removeStat = (index: number) => {
+    setSettings(prev => ({
+      ...prev,
+      stats: prev.stats.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addQuote = () => {
+    setSettings(prev => ({
+      ...prev,
+      quotes: [...prev.quotes, { text: 'Nieuwe quote...', author: 'Auteur' }]
+    }));
+  };
+
+  const updateQuote = (index: number, field: 'text' | 'author', value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      quotes: prev.quotes.map((quote, i) =>
+        i === index ? { ...quote, [field]: value } : quote
+      )
+    }));
+  };
+
+  const removeQuote = (index: number) => {
+    setSettings(prev => ({
+      ...prev,
+      quotes: prev.quotes.filter((_, i) => i !== index)
     }));
   };
 
@@ -503,51 +552,94 @@ const AdminAbout = () => {
         {/* Stats */}
         <Card>
           <CardHeader>
-            <CardTitle>Statistieken</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Statistieken</CardTitle>
+              <Button onClick={addStat} size="sm" variant="outline">
+                <Plus className="w-4 h-4 mr-1" />
+                Voeg Statistiek Toe
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-4">
               {settings.stats.map((stat, index) => (
-                <div key={index} className="space-y-2">
-                  <label className="text-sm font-medium">Statistiek {index + 1}</label>
-                  <Input
-                    value={stat.number}
-                    onChange={(e) => updateStat(index, 'number', e.target.value)}
-                    placeholder="50+"
-                  />
-                  <Input
-                    value={stat.label}
-                    onChange={(e) => updateStat(index, 'label', e.target.value)}
-                    placeholder="Projecten"
-                  />
-                </div>
+                <Card key={index} className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium">Statistiek {index + 1}</label>
+                      <Button
+                        onClick={() => removeStat(index)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        value={stat.number}
+                        onChange={(e) => updateStat(index, 'number', e.target.value)}
+                        placeholder="50+"
+                      />
+                      <Input
+                        value={stat.label}
+                        onChange={(e) => updateStat(index, 'label', e.target.value)}
+                        placeholder="Projecten"
+                      />
+                    </div>
+                  </div>
+                </Card>
               ))}
+              {settings.stats.length === 0 && (
+                <p className="text-muted-foreground text-sm">Nog geen statistieken toegevoegd.</p>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Quote */}
+        {/* Quotes */}
         <Card>
           <CardHeader>
-            <CardTitle>Inspiratie Quote</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Quote Tekst</label>
-              <Textarea
-                value={settings.quote_text}
-                onChange={(e) => setSettings(prev => ({ ...prev, quote_text: e.target.value }))}
-                placeholder="Inspirerende quote..."
-                rows={3}
-              />
+            <div className="flex items-center justify-between">
+              <CardTitle>Inspiratie Quotes</CardTitle>
+              <Button onClick={addQuote} size="sm" variant="outline">
+                <Plus className="w-4 h-4 mr-1" />
+                Voeg Quote Toe
+              </Button>
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Auteur</label>
-              <Input
-                value={settings.quote_author}
-                onChange={(e) => setSettings(prev => ({ ...prev, quote_author: e.target.value }))}
-                placeholder="Naam van de auteur"
-              />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {settings.quotes.map((quote, index) => (
+                <Card key={index} className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium">Quote {index + 1}</label>
+                      <Button
+                        onClick={() => removeQuote(index)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={quote.text}
+                      onChange={(e) => updateQuote(index, 'text', e.target.value)}
+                      placeholder="Inspirerende quote..."
+                      rows={3}
+                    />
+                    <Input
+                      value={quote.author}
+                      onChange={(e) => updateQuote(index, 'author', e.target.value)}
+                      placeholder="Naam van de auteur"
+                    />
+                  </div>
+                </Card>
+              ))}
+              {settings.quotes.length === 0 && (
+                <p className="text-muted-foreground text-sm">Nog geen quotes toegevoegd.</p>
+              )}
             </div>
           </CardContent>
         </Card>
