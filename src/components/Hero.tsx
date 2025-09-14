@@ -480,7 +480,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
                   }}
                   className="glass-effect text-white border-white/30 bg-white/20 hover:bg-white/10"
                 >
-                  {section.button_text || section.title}
+                  {section.title}
                 </Button>
               ))}
             </div>

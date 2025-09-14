@@ -481,14 +481,6 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
                       <Plus className="w-4 h-4 mr-1" />
                       Skill
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addContentRightItem('button')}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Button
-                    </Button>
                   </div>
                 </div>
               </CardHeader>

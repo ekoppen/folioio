@@ -83,7 +83,7 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
       case 'stat':
         const StatContent = (
           <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg border shadow-sm">
-            <div className="text-3xl font-bold text-accent mb-2">
+            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {item.value}
             </div>
             <div className="text-sm font-bold text-gray-900 dark:text-white">
