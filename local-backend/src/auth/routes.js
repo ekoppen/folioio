@@ -424,4 +424,34 @@ router.delete('/users/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Update profile
+router.put('/profile', authenticateToken, async (req, res) => {
+  try {
+    const { full_name } = req.body;
+    const userId = req.user.sub;
+
+    if (!full_name || full_name.trim() === '') {
+      return res.status(400).json({
+        error: { message: 'Full name is required' }
+      });
+    }
+
+    // Update profile
+    await query(
+      'UPDATE public.profiles SET full_name = $1, updated_at = NOW() WHERE user_id = $2',
+      [full_name.trim(), userId]
+    );
+
+    res.json({
+      message: 'Profile updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      error: { message: 'Internal server error' }
+    });
+  }
+});
+
 module.exports = router;

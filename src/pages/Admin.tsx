@@ -7,13 +7,14 @@ import { AdminSettings } from '@/components/admin/AdminSettings';
 import { PageManager } from '@/components/page-editor/PageManager';
 import { AdminAlbums } from '@/components/admin/AdminAlbums';
 import { PageEditor } from '@/components/page-editor/PageEditor';
-import { LogOut, Settings, Image, FileText, Folder, Edit, User, Phone, Globe, Layers, Shield } from 'lucide-react';
+import { LogOut, Settings, Image, FileText, Folder, Edit, User, Phone, Globe, Layers, Shield, Users } from 'lucide-react';
 import AdminFooter from '@/components/admin/AdminFooter';
 import AdminAbout from '@/components/admin/AdminAbout';
 import AdminContact from '@/components/admin/AdminContact';
 // import AdminLanguages from '@/components/admin/AdminLanguages';
 import AdminCustomSections from '@/components/admin/AdminCustomSections';
 import AdminAccount from '@/components/admin/AdminAccount';
+import AdminUsers from '@/components/admin/AdminUsers';
 
 const Admin = () => {
   const { user, isAdmin, signOut, loading } = useAuth();
@@ -73,7 +74,7 @@ const Admin = () => {
 
       <div className="container mx-auto p-6">
         <Tabs defaultValue="settings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9 lg:w-fit lg:grid-cols-9">
+          <TabsList className="grid w-full grid-cols-10 lg:w-fit lg:grid-cols-10">
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
               Branding
@@ -101,6 +102,10 @@ const Admin = () => {
             <TabsTrigger value="custom" className="flex items-center gap-2">
               <Layers className="w-4 h-4" />
               Custom
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Users
             </TabsTrigger>
             <TabsTrigger value="account" className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
@@ -138,6 +143,10 @@ const Admin = () => {
           
           <TabsContent value="custom">
             <AdminCustomSections />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <AdminUsers />
           </TabsContent>
 
           <TabsContent value="account">
