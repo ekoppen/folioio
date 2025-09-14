@@ -32,18 +32,25 @@ mkdir -p "$DEPLOY_DIR/postgres-config"
 echo "📊 Copying database migrations..."
 MIGRATIONS_COPIED=0
 
-if [ -d "local-backend/src/migrations" ]; then
-    for migration in local-backend/src/migrations/*.sql; do
-        if [ -f "$migration" ]; then
-            migration_name=$(basename "$migration")
-            cp "$migration" "$DEPLOY_DIR/postgres-config/"
-            echo "  ✅ Copied: $migration_name"
-            MIGRATIONS_COPIED=$((MIGRATIONS_COPIED + 1))
-        fi
-    done
+# Check both possible migration directories
+for migrations_dir in "local-backend/src/migrations" "supabase/migrations"; do
+    if [ -d "$migrations_dir" ]; then
+        echo "  📂 Found migrations in: $migrations_dir"
+        for migration in "$migrations_dir"/*.sql; do
+            if [ -f "$migration" ]; then
+                migration_name=$(basename "$migration")
+                cp "$migration" "$DEPLOY_DIR/postgres-config/"
+                echo "  ✅ Copied: $migration_name"
+                MIGRATIONS_COPIED=$((MIGRATIONS_COPIED + 1))
+            fi
+        done
+    fi
+done
+
+if [ $MIGRATIONS_COPIED -gt 0 ]; then
     echo "📦 Total migrations copied: $MIGRATIONS_COPIED"
 else
-    echo "⚠️  No migrations directory found"
+    echo "⚠️  No migrations found in local-backend/src/migrations or supabase/migrations"
 fi
 
 # Change to deployment directory
