@@ -148,13 +148,14 @@ export const TemplateLibrary = ({ onBack, onSelectTemplate }: TemplateLibraryPro
             content: '',
             settings: {
               fields: [
-                { name: 'naam', type: 'text', placeholder: 'Je naam', required: true },
+                { name: 'name', type: 'text', placeholder: 'Je naam', required: true },
                 { name: 'email', type: 'email', placeholder: 'Je e-mailadres', required: true },
-                { name: 'onderwerp', type: 'text', placeholder: 'Onderwerp', required: true },
-                { name: 'bericht', type: 'textarea', placeholder: 'Je bericht', required: true }
+                { name: 'phone', type: 'text', placeholder: 'Telefoon (optioneel)', required: false },
+                { name: 'subject', type: 'text', placeholder: 'Onderwerp', required: true },
+                { name: 'message', type: 'textarea', placeholder: 'Je bericht', required: true }
               ],
               submitText: 'Versturen',
-              action: '/contact'
+              action: '/api/email/send-contact'
             }
           }
         ]
