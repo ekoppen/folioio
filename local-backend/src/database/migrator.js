@@ -4,12 +4,15 @@ const { query } = require('./client');
 
 /**
  * Runtime Database Migration System
+ * Supports both fresh installs and incremental migrations
  * Automatically runs migrations when the API server starts
  */
 class DatabaseMigrator {
   constructor() {
     this.migrationsDir = path.join(__dirname, '..', 'migrations');
+    this.schemaFile = path.join(__dirname, 'complete-schema.sql');
     this.migrationsTable = 'schema_migrations';
+    this.freshInstall = process.env.FRESH_INSTALL === 'true';
   }
 
   /**
@@ -110,15 +113,70 @@ class DatabaseMigrator {
   }
 
   /**
+   * Run fresh install using complete schema
+   */
+  async runFreshInstall() {
+    console.log('🚀 Running fresh database installation...');
+
+    try {
+      // Check if complete schema exists
+      await fs.access(this.schemaFile);
+
+      // Read and execute complete schema
+      const schemaSQL = await fs.readFile(this.schemaFile, 'utf8');
+      console.log('📖 Executing complete schema...');
+
+      await query(schemaSQL);
+
+      console.log('✅ Fresh install completed successfully!');
+      console.log('📊 All tables, indexes, triggers, and default data created.');
+
+      return { success: true, type: 'fresh_install' };
+
+    } catch (error) {
+      console.error('❌ Fresh install failed:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if database appears to be fresh (no content tables)
+   */
+  async isDatabaseFresh() {
+    try {
+      const result = await query(`
+        SELECT COUNT(*) as table_count
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name IN ('albums', 'photos', 'profiles', 'site_settings')
+      `);
+
+      const tableCount = parseInt(result.rows[0].table_count);
+      return tableCount === 0;
+    } catch (error) {
+      // If we can't check, assume it's not fresh
+      return false;
+    }
+  }
+
+  /**
    * Run all pending migrations
    */
   async runMigrations() {
     console.log('🔄 Checking for database migrations...');
-    
+
     try {
+      // Check for fresh install mode or fresh database
+      const isFresh = await this.isDatabaseFresh();
+
+      if (this.freshInstall || isFresh) {
+        console.log('🆕 Fresh install detected');
+        return await this.runFreshInstall();
+      }
+
       // Initialize migration tracking
       await this.initializeMigrationsTable();
-      
+
       // Get current state
       const appliedMigrations = await this.getAppliedMigrations();
       const availableMigrations = await this.getAvailableMigrations();

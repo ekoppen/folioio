@@ -28,29 +28,30 @@ cp nginx-simple.conf "$DEPLOY_DIR/"
 # Create postgres init directory
 mkdir -p "$DEPLOY_DIR/postgres-config"
 
-# Copy ALL database migrations automatically
-echo "📊 Copying database migrations..."
-MIGRATIONS_COPIED=0
+# Database setup - Fresh install mode for new deployments
+echo "🎯 Setting up database for fresh installation..."
 
-# Check both possible migration directories
-for migrations_dir in "local-backend/src/migrations" "supabase/migrations"; do
-    if [ -d "$migrations_dir" ]; then
-        echo "  📂 Found migrations in: $migrations_dir"
-        for migration in "$migrations_dir"/*.sql; do
-            if [ -f "$migration" ]; then
-                migration_name=$(basename "$migration")
-                cp "$migration" "$DEPLOY_DIR/postgres-config/"
-                echo "  ✅ Copied: $migration_name"
-                MIGRATIONS_COPIED=$((MIGRATIONS_COPIED + 1))
-            fi
-        done
-    fi
-done
-
-if [ $MIGRATIONS_COPIED -gt 0 ]; then
-    echo "📦 Total migrations copied: $MIGRATIONS_COPIED"
+# Copy the complete schema for fresh installs
+if [ -f "local-backend/src/database/complete-schema.sql" ]; then
+    cp "local-backend/src/database/complete-schema.sql" "$DEPLOY_DIR/local-backend/src/database/"
+    echo "✅ Complete schema copied for fresh install"
 else
-    echo "⚠️  No migrations found in local-backend/src/migrations or supabase/migrations"
+    echo "⚠️  Complete schema not found - falling back to migrations"
+
+    # Fallback: Copy migrations if schema doesn't exist
+    echo "📊 Copying database migrations as fallback..."
+    MIGRATIONS_COPIED=0
+
+    for migration in "local-backend/src/migrations"/*.sql; do
+        if [ -f "$migration" ]; then
+            migration_name=$(basename "$migration")
+            cp "$migration" "$DEPLOY_DIR/postgres-config/"
+            echo "  ✅ Copied: $migration_name"
+            MIGRATIONS_COPIED=$((MIGRATIONS_COPIED + 1))
+        fi
+    done
+
+    echo "📦 Total migrations copied: $MIGRATIONS_COPIED"
 fi
 
 # Change to deployment directory
@@ -125,6 +126,9 @@ MINIO_ROOT_PASSWORD=$MINIO_SECRET_KEY
 # Vite environment variables for frontend build
 VITE_BACKEND_TYPE=local
 VITE_LOCAL_API_URL=/api
+
+# Fresh install mode for new deployments
+FRESH_INSTALL=true
 EOF
 
 echo "📝 Created .env file in deployment directory"
