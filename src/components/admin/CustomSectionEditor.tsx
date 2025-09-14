@@ -262,7 +262,7 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {section ? 'Edit Custom Section' : 'Create Custom Section'}
