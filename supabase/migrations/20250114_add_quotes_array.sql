@@ -11,5 +11,5 @@ SET quotes = jsonb_build_array(
   )
 )
 WHERE quote_text IS NOT NULL
-  AND quote_text != ''
+  AND quote_text <> ''
   AND quotes = '[]'::jsonb;
