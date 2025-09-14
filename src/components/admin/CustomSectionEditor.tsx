@@ -75,6 +75,7 @@ interface ContentRightItem {
   icon?: string;
   button_text?: string;
   button_link?: string;
+  stat_link?: string;
 }
 
 const ICON_OPTIONS = [
@@ -526,6 +527,17 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
                                 onChange={(e) => updateContentRightItem(index, { label: e.target.value })}
                                 placeholder="e.g., Projects"
                               />
+                            </div>
+                            <div>
+                              <Label>Click URL (optional)</Label>
+                              <Input
+                                value={item.stat_link || ''}
+                                onChange={(e) => updateContentRightItem(index, { stat_link: e.target.value })}
+                                placeholder="e.g., #portfolio, contact, https://..."
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Leave empty for no click action. Use: #section for anchors, 'contact' for contact modal, or full URLs
+                              </p>
                             </div>
                           </>
                         )}

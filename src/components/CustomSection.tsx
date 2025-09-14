@@ -33,6 +33,7 @@ interface CustomSectionData {
     icon?: string;
     button_text?: string;
     button_link?: string;
+    stat_link?: string;
   }>;
   button_text?: string;
   button_link?: string;
@@ -80,16 +81,37 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
   const renderContentRightItem = (item: CustomSectionData['content_right'][0], index: number) => {
     switch (item.type) {
       case 'stat':
-        return (
-          <div key={index} className="text-center p-4 bg-accent/10 rounded-lg border">
+        const StatContent = (
+          <div className="text-center p-4 bg-accent/10 rounded-lg border">
             <div className="text-3xl font-bold text-accent mb-2">
               {item.value}
             </div>
-            <div className="text-sm font-medium text-foreground">
+            <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">
               {item.label}
             </div>
           </div>
         );
+
+        if (item.stat_link) {
+          return (
+            <div key={index} className="cursor-pointer transition-transform hover:scale-105" onClick={() => {
+              if (item.stat_link?.startsWith('#')) {
+                const targetElement = document.getElementById(item.stat_link.substring(1));
+                if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth' });
+              } else if (item.stat_link === 'contact') {
+                setIsContactModalOpen(true);
+              } else if (item.stat_link?.startsWith('http')) {
+                window.open(item.stat_link, '_blank', 'noopener,noreferrer');
+              } else if (item.stat_link) {
+                window.location.href = item.stat_link;
+              }
+            }}>
+              {StatContent}
+            </div>
+          );
+        }
+
+        return <div key={index}>{StatContent}</div>;
       
       case 'service':
         const ServiceIcon = item.icon ? iconMap[item.icon] : Heart;
