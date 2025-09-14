@@ -7,7 +7,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { User, LogIn, LogOut, Settings, ChevronDown, Menu, X, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ContactModal } from '@/components/ContactModal';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
+// import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { getBackendAdapter } from '@/config/backend-config';
 
 interface NavigationPage {
@@ -497,7 +497,7 @@ const Navigation = () => {
           )}
 
           <div className="hidden md:flex items-center space-x-4">
-            <LanguageSwitcher />
+            {/* <LanguageSwitcher /> */}
             {user ? (
               <>
                 {isAdmin && (
@@ -587,9 +587,9 @@ const Navigation = () => {
               </button>
               
               <div className="border-t border-white/10 pt-4 mt-4 space-y-2">
-                <div className="pb-2">
+                {/* <div className="pb-2">
                   <LanguageSwitcher />
-                </div>
+                </div> */}
                 {user ? (
                   <>
                     {isAdmin && (
