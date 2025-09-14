@@ -454,4 +454,97 @@ router.put('/profile', authenticateToken, async (req, res) => {
   }
 });
 
+// Create new user (admin only)
+router.post('/users', authenticateToken, async (req, res) => {
+  try {
+    const { email, password, full_name, role = 'editor' } = req.body;
+    const currentUserId = req.user.sub;
+
+    // Check if current user is admin
+    const userRole = await query(
+      'SELECT p.role FROM public.profiles p WHERE p.user_id = $1',
+      [currentUserId]
+    );
+
+    if (userRole.rows.length === 0 || userRole.rows[0].role !== 'admin') {
+      return res.status(403).json({
+        error: { message: 'Admin access required' }
+      });
+    }
+
+    if (!email || !password || !full_name) {
+      return res.status(400).json({
+        error: { message: 'Email, password, and full name are required' }
+      });
+    }
+
+    if (!['admin', 'editor'].includes(role)) {
+      return res.status(400).json({
+        error: { message: 'Role must be admin or editor' }
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        error: { message: 'Password must be at least 8 characters long' }
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await query(
+      'SELECT id FROM auth.users WHERE email = $1',
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({
+        error: { message: 'User with this email already exists' }
+      });
+    }
+
+    // Hash password
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create user in transaction
+    const result = await transaction(async (client) => {
+      // Insert user
+      const userResult = await client.query(
+        `INSERT INTO auth.users (email, encrypted_password, confirmed_at, email_confirmed_at)
+         VALUES ($1, $2, NOW(), NOW())
+         RETURNING id, email, created_at`,
+        [email, hashedPassword]
+      );
+
+      const user = userResult.rows[0];
+
+      // Create profile
+      await client.query(
+        `INSERT INTO public.profiles (user_id, email, full_name, role)
+         VALUES ($1, $2, $3, $4)`,
+        [user.id, email, full_name, role]
+      );
+
+      return {
+        id: user.id,
+        email: user.email,
+        full_name: full_name,
+        role: role,
+        created_at: user.created_at
+      };
+    });
+
+    res.status(201).json({
+      user: result,
+      message: 'User created successfully'
+    });
+
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({
+      error: { message: 'Internal server error' }
+    });
+  }
+});
+
 module.exports = router;
