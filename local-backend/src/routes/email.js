@@ -2,6 +2,7 @@ const express = require('express');
 const { query } = require('../database/client');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const { requireAuth, requireAdmin } = require('../auth/middleware');
 
 const router = express.Router();
 
@@ -218,22 +219,8 @@ router.post('/send-contact', async (req, res) => {
 });
 
 // Get contact messages with pagination, search and filtering (admin only)
-router.get('/messages', async (req, res) => {
+router.get('/messages', requireAuth, requireAdmin, async (req, res) => {
   try {
-    // Get auth token
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No valid authorization token provided' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Check if user is admin
-    const userResult = await query('SELECT role FROM profiles WHERE id = $1', [decoded.sub]);
-    if (!userResult.rows.length || userResult.rows[0].role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
 
     // Parse query parameters
     const page = parseInt(req.query.page) || 1;
@@ -320,25 +307,10 @@ router.get('/messages', async (req, res) => {
 });
 
 // Mark message as read (admin only)
-router.patch('/messages/:id/read', async (req, res) => {
+router.patch('/messages/:id/read', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { is_read } = req.body;
-
-    // Get auth token
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No valid authorization token provided' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Check if user is admin
-    const userResult = await query('SELECT role FROM profiles WHERE id = $1', [decoded.sub]);
-    if (!userResult.rows.length || userResult.rows[0].role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
 
     // Update message read status
     const updateResult = await query(`
@@ -366,24 +338,9 @@ router.patch('/messages/:id/read', async (req, res) => {
 });
 
 // Bulk mark messages as read (admin only)
-router.patch('/messages/bulk/read', async (req, res) => {
+router.patch('/messages/bulk/read', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { messageIds, markAsRead } = req.body;
-
-    // Get auth token
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No valid authorization token provided' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Check if user is admin
-    const userResult = await query('SELECT role FROM profiles WHERE id = $1', [decoded.sub]);
-    if (!userResult.rows.length || userResult.rows[0].role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
 
     if (!Array.isArray(messageIds) || messageIds.length === 0) {
       return res.status(400).json({ error: 'messageIds array is required' });
@@ -413,25 +370,10 @@ router.patch('/messages/bulk/read', async (req, res) => {
 });
 
 // Reply to contact message (admin only)
-router.post('/messages/:id/reply', async (req, res) => {
+router.post('/messages/:id/reply', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { subject, message } = req.body;
-
-    // Get auth token
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No valid authorization token provided' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Check if user is admin
-    const userResult = await query('SELECT role FROM profiles WHERE id = $1', [decoded.sub]);
-    if (!userResult.rows.length || userResult.rows[0].role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
 
     // Validate required fields
     if (!subject || !message) {
@@ -568,24 +510,9 @@ router.post('/messages/:id/reply', async (req, res) => {
 });
 
 // Delete contact message (admin only)
-router.delete('/messages/:id', async (req, res) => {
+router.delete('/messages/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-
-    // Get auth token
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No valid authorization token provided' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Check if user is admin
-    const userResult = await query('SELECT role FROM profiles WHERE id = $1', [decoded.sub]);
-    if (!userResult.rows.length || userResult.rows[0].role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
 
     // Delete the message
     const deleteResult = await query(`
@@ -612,7 +539,7 @@ router.delete('/messages/:id', async (req, res) => {
 });
 
 // Debug route to test email functionality
-router.post('/test-send', async (req, res) => {
+router.post('/test-send', requireAuth, requireAdmin, async (req, res) => {
   try {
     console.log('🔍 Test send route hit with body:', req.body);
 
