@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getBackendAdapter } from '@/config/backend-config';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Settings, Inbox, Mail } from 'lucide-react';
+import { Loader2, Send, Settings, Inbox, Mail, Save } from 'lucide-react';
 import AdminContactMessages from './AdminContactMessages';
 
 interface ContactSettings {
@@ -247,24 +247,22 @@ Sent from your portfolio admin panel.`
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b mb-6 -mx-6 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Contact Beheer</h2>
-            <p className="text-muted-foreground">
-              Beheer contact instellingen en berichten
-            </p>
-          </div>
-          <Button
-            onClick={updateSettings}
-            disabled={updating}
-            className="flex items-center gap-2"
-            style={{ backgroundColor: 'hsl(var(--dynamic-accent))', borderColor: 'hsl(var(--dynamic-accent))' }}
-          >
-            {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-            {updating ? 'Opslaan...' : 'Instellingen Opslaan'}
-          </Button>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Contact Beheer</h2>
+          <p className="text-muted-foreground">
+            Beheer contact instellingen en berichten
+          </p>
         </div>
+        <Button
+          onClick={updateSettings}
+          disabled={updating}
+          className="flex items-center gap-2"
+          style={{ backgroundColor: 'hsl(var(--dynamic-accent))', borderColor: 'hsl(var(--dynamic-accent))' }}
+        >
+          {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {updating ? 'Opslaan...' : 'Opslaan'}
+        </Button>
       </div>
 
       <Tabs defaultValue="messages" className="space-y-6">
