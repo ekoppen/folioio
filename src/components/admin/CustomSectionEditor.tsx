@@ -67,12 +67,14 @@ interface CustomSectionEditorProps {
 }
 
 interface ContentRightItem {
-  type: 'stat' | 'service' | 'skill';
+  type: 'stat' | 'service' | 'skill' | 'button';
   label?: string;
   value?: string;
   title?: string;
   description?: string;
   icon?: string;
+  button_text?: string;
+  button_link?: string;
 }
 
 const ICON_OPTIONS = [
@@ -200,7 +202,7 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
     }
   };
 
-  const addContentRightItem = (type: 'stat' | 'service' | 'skill') => {
+  const addContentRightItem = (type: 'stat' | 'service' | 'skill' | 'button') => {
     const newItem: ContentRightItem = { type };
     
     switch (type) {
@@ -215,6 +217,10 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
         break;
       case 'skill':
         newItem.label = 'Skill Name';
+        break;
+      case 'button':
+        newItem.button_text = 'Click Here';
+        newItem.button_link = '#';
         break;
     }
 
@@ -474,6 +480,14 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
                       <Plus className="w-4 h-4 mr-1" />
                       Skill
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addContentRightItem('button')}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Button
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
@@ -566,13 +580,34 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
                             />
                           </div>
                         )}
+
+                        {item.type === 'button' && (
+                          <>
+                            <div>
+                              <Label>Button Text</Label>
+                              <Input
+                                value={item.button_text || ''}
+                                onChange={(e) => updateContentRightItem(index, { button_text: e.target.value })}
+                                placeholder="e.g., Learn More"
+                              />
+                            </div>
+                            <div>
+                              <Label>Button Link</Label>
+                              <Input
+                                value={item.button_link || ''}
+                                onChange={(e) => updateContentRightItem(index, { button_link: e.target.value })}
+                                placeholder="e.g., #portfolio or https://example.com"
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
                     </Card>
                   ))}
 
                   {formData.content_right.length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
-                      No elements added yet. Click the buttons above to add stats, services, or skills.
+                      No elements added yet. Click the buttons above to add stats, services, skills, or buttons.
                     </div>
                   )}
                 </div>

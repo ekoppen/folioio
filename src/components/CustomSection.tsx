@@ -25,12 +25,14 @@ interface CustomSectionData {
   header_image_url?: string;
   content_left: string;
   content_right: Array<{
-    type: 'stat' | 'service' | 'skill';
+    type: 'stat' | 'service' | 'skill' | 'button';
     label?: string;
     value?: string;
     title?: string;
     description?: string;
     icon?: string;
+    button_text?: string;
+    button_link?: string;
   }>;
   button_text?: string;
   button_link?: string;
@@ -83,7 +85,7 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
             <div className="text-3xl font-bold text-accent mb-2">
               {item.value}
             </div>
-            <div className="text-sm text-foreground/70">
+            <div className="text-sm font-medium text-foreground">
               {item.label}
             </div>
           </div>
@@ -113,7 +115,31 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
             {item.label}
           </Badge>
         );
-      
+
+      case 'button':
+        return (
+          <div key={index} className="mb-4">
+            <Button
+              onClick={() => {
+                if (!item.button_link) return;
+                if (item.button_link.startsWith('#')) {
+                  const targetElement = document.getElementById(item.button_link.substring(1));
+                  if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth' });
+                } else if (item.button_link === 'contact') {
+                  setIsContactModalOpen(true);
+                } else if (item.button_link.startsWith('http')) {
+                  window.open(item.button_link, '_blank', 'noopener,noreferrer');
+                } else {
+                  window.location.href = item.button_link;
+                }
+              }}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-6 py-2"
+            >
+              {item.button_text || item.label}
+            </Button>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -191,9 +217,18 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
 
               {/* Skills - displayed as badges */}
               {sectionData.content_right.filter(item => item.type === 'skill').length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mb-8">
                   {sectionData.content_right
                     .filter(item => item.type === 'skill')
+                    .map((item, index) => renderContentRightItem(item, index))}
+                </div>
+              )}
+
+              {/* Buttons - displayed as individual buttons */}
+              {sectionData.content_right.filter(item => item.type === 'button').length > 0 && (
+                <div className="space-y-3">
+                  {sectionData.content_right
+                    .filter(item => item.type === 'button')
                     .map((item, index) => renderContentRightItem(item, index))}
                 </div>
               )}
