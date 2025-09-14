@@ -79,11 +79,11 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
     switch (item.type) {
       case 'stat':
         return (
-          <div key={index} className="text-center">
+          <div key={index} className="text-center p-4 bg-accent/10 rounded-lg border">
             <div className="text-3xl font-bold text-accent mb-2">
               {item.value}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-foreground/70">
               {item.label}
             </div>
           </div>

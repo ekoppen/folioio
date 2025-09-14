@@ -390,7 +390,15 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
             {/* Button Settings */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Button Settings</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Button size="sm" variant="outline" className="pointer-events-none">
+                    Button
+                  </Button>
+                  Button Settings (Optional)
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Add a call-to-action button to your section. Leave empty to hide the button.
+                </p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -411,6 +419,9 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
                     onChange={(e) => setFormData(prev => ({ ...prev, button_link: e.target.value }))}
                     placeholder="e.g., #portfolio or https://example.com"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Use: <code>#section-id</code> for scrolling, <code>contact</code> for contact modal, or full URLs
+                  </p>
                 </div>
               </CardContent>
             </Card>
