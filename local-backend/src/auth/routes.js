@@ -518,11 +518,12 @@ router.post('/users', authenticateToken, async (req, res) => {
 
       const user = userResult.rows[0];
 
-      // Create profile
+      // Update profile (trigger creates it automatically, we just update with our data)
       await client.query(
-        `INSERT INTO public.profiles (user_id, email, full_name, role)
-         VALUES ($1, $2, $3, $4)`,
-        [user.id, email, full_name, role]
+        `UPDATE public.profiles
+         SET full_name = $2, role = $3, updated_at = NOW()
+         WHERE user_id = $1`,
+        [user.id, full_name, role]
       );
 
       return {
