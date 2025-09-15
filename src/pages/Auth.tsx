@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { SEOMetaTags } from '@/components/SEOMetaTags';
 import { useAuth } from '@/hooks/useAuth';
 
 const Auth = () => {
@@ -34,6 +35,10 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-portfolio-light dark:bg-portfolio-dark flex items-center justify-center p-4">
+      <SEOMetaTags
+        title="Inloggen"
+        description="Log in op je account om toegang te krijgen tot het admin dashboard"
+      />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="text-2xl font-bold text-portfolio-dark dark:text-portfolio-light">

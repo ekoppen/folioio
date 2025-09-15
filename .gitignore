@@ -29,3 +29,4 @@ data/
 *.njsproj
 *.sln
 *.sw?
+*.bak

@@ -6,6 +6,7 @@ import PortfolioGallery from '@/components/PortfolioGallery';
 import About from '@/components/About';
 import CustomSection from '@/components/CustomSection';
 import SimplifiedFooter from '@/components/SimplifiedFooter';
+import { SEOMetaTags } from '@/components/SEOMetaTags';
 import { useAccentColor } from '@/hooks/useAccentColor';
 import { getBackendAdapter } from '@/config/backend-config';
 
@@ -88,17 +89,22 @@ const Index = () => {
 
   return (
     <div className="min-h-screen relative">
+      <SEOMetaTags
+        title={selectedAlbum ? selectedAlbum.name : undefined}
+        description={selectedAlbum ? selectedAlbum.description : undefined}
+        type={selectedAlbum ? 'article' : 'website'}
+      />
       <Navigation />
       <Hero selectedAlbum={selectedAlbum} onBackToHome={handleBackToHome} />
       <Slideshow />
       <PortfolioGallery onAlbumSelect={handleAlbumSelect} />
       <About />
-      
+
       {/* Custom Sections */}
       {customSections.map((section) => (
         <CustomSection key={section.id} sectionData={section} />
       ))}
-      
+
       {/* Add padding bottom when footer is in overlay mode to prevent content being hidden */}
       <div className="pb-20" />
       <SimplifiedFooter />

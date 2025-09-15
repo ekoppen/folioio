@@ -5,6 +5,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { getBackendAdapter } from '@/config/backend-config';
 import Navigation from '@/components/Navigation';
 import SimplifiedFooter from '@/components/SimplifiedFooter';
+import { SEOMetaTags } from '@/components/SEOMetaTags';
 import { PageElement } from '@/components/page-editor/types';
 import { EditableElement } from '@/components/page-editor/EditableElement';
 import NotFound from '@/pages/NotFound';
@@ -139,8 +140,13 @@ const DynamicPage = () => {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="min-h-screen">
+        <SEOMetaTags
+          title={page?.name}
+          description={`Custom pagina: ${page?.name}`}
+          type="article"
+        />
         <Navigation />
-        
+
         {/* Render page elements */}
         <main className="relative flex flex-col">
           {elements.map((element) => (
@@ -155,7 +161,7 @@ const DynamicPage = () => {
             />
           ))}
         </main>
-        
+
         <SimplifiedFooter />
       </div>
     </DndProvider>

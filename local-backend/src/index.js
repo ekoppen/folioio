@@ -11,6 +11,7 @@ const storageRoutes = require('./storage/routes');
 const functionsRoutes = require('./functions/routes');
 const customSectionsRoutes = require('./routes/customSections');
 const emailRoutes = require('./routes/email');
+const seoRoutes = require('./routes/seo');
 const { initializeDatabase } = require('./database/client');
 const { initializeStorage } = require('./storage/client');
 const migrator = require('./database/migrator');
@@ -67,17 +68,108 @@ app.get('/test-db', async (req, res) => {
   try {
     const { query } = require('./database/client');
     const result = await query('SELECT NOW() as current_time');
-    res.json({ 
-      status: 'ok', 
+    res.json({
+      status: 'ok',
       database: 'connected',
       timestamp: result.rows[0].current_time
     });
   } catch (error) {
-    res.status(500).json({ 
-      status: 'error', 
+    res.status(500).json({
+      status: 'error',
       database: 'disconnected',
-      error: error.message 
+      error: error.message
     });
+  }
+});
+
+// Robots.txt endpoint
+app.get('/robots.txt', async (req, res) => {
+  try {
+    const { query } = require('./database/client');
+    const result = await query(
+      'SELECT * FROM public.seo_settings ORDER BY updated_at DESC LIMIT 1'
+    );
+
+    const seoSettings = result.rows[0] || {};
+
+    let robotsContent = '';
+
+    // If SEO is disabled or crawling protection is enabled
+    if (!seoSettings.seo_enabled || seoSettings.crawling_protection_enabled) {
+      if (seoSettings.custom_robots_txt && seoSettings.custom_robots_txt.trim()) {
+        robotsContent = seoSettings.custom_robots_txt;
+      } else {
+        // Default blocking configuration
+        robotsContent = `# Block all crawlers
+User-agent: *
+Disallow: /
+
+# Specifically block AI training bots
+User-agent: GPTBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+# No sitemap when protection is enabled`;
+      }
+    } else {
+      // Generate robots.txt based on settings
+      if (seoSettings.custom_robots_txt && seoSettings.custom_robots_txt.trim()) {
+        robotsContent = seoSettings.custom_robots_txt;
+      } else {
+        robotsContent = `# Allow search engine crawlers
+User-agent: *
+Allow: /
+
+# Block AI training bots if requested
+${seoSettings.block_ai_training ? `
+User-agent: GPTBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+` : ''}
+
+# Block specific crawlers if configured
+${seoSettings.blocked_crawlers && seoSettings.blocked_crawlers.length > 0
+  ? seoSettings.blocked_crawlers.map(bot => `
+User-agent: ${bot}
+Disallow: /`).join('')
+  : ''
+}
+
+# Sitemap location
+${seoSettings.sitemap_enabled ? 'Sitemap: /sitemap.xml' : ''}`;
+      }
+    }
+
+    res.set('Content-Type', 'text/plain');
+    res.send(robotsContent.trim());
+  } catch (error) {
+    console.error('Error generating robots.txt:', error);
+    res.set('Content-Type', 'text/plain');
+    res.send(`# Error generating robots.txt
+User-agent: *
+Disallow: /`);
   }
 });
 
@@ -112,6 +204,11 @@ app.use('/email', (req, res, next) => {
   console.log(`Email route: ${req.method} ${req.path}`);
   next();
 }, emailRoutes);
+
+app.use('/seo', (req, res, next) => {
+  console.log(`SEO route: ${req.method} ${req.path}`);
+  next();
+}, seoRoutes);
 
 console.log('API routes mounted successfully');
 

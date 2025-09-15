@@ -2,12 +2,13 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { SEOMetaTags } from '@/components/SEOMetaTags';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminSettings } from '@/components/admin/AdminSettings';
 import { PageManager } from '@/components/page-editor/PageManager';
 import { AdminAlbums } from '@/components/admin/AdminAlbums';
 import { PageEditor } from '@/components/page-editor/PageEditor';
-import { LogOut, Settings, Image, FileText, Folder, Edit, User, Phone, Globe, Layers, Shield, Users } from 'lucide-react';
+import { LogOut, Settings, Image, FileText, Folder, Edit, User, Phone, Globe, Layers, Shield, Users, Search } from 'lucide-react';
 import AdminFooter from '@/components/admin/AdminFooter';
 import AdminAbout from '@/components/admin/AdminAbout';
 import AdminContact from '@/components/admin/AdminContact';
@@ -15,6 +16,7 @@ import AdminContact from '@/components/admin/AdminContact';
 import AdminCustomSections from '@/components/admin/AdminCustomSections';
 import AdminAccount from '@/components/admin/AdminAccount';
 import AdminUsers from '@/components/admin/AdminUsers';
+import AdminSEO from '@/components/admin/AdminSEO';
 
 const Admin = () => {
   const { user, isAdmin, signOut, loading } = useAuth();
@@ -45,6 +47,10 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-portfolio-light dark:bg-portfolio-dark">
+      <SEOMetaTags
+        title="Admin Dashboard"
+        description="Beheer je portfolio website - instellingen, albums, custom secties en meer"
+      />
       <div className="border-b border-portfolio-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-portfolio-dark dark:text-portfolio-light">
@@ -74,7 +80,7 @@ const Admin = () => {
 
       <div className="container mx-auto p-6">
         <Tabs defaultValue="settings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-10 lg:w-fit lg:grid-cols-10">
+          <TabsList className="grid w-full grid-cols-11 lg:w-fit lg:grid-cols-11">
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
               Branding
@@ -102,6 +108,10 @@ const Admin = () => {
             <TabsTrigger value="custom" className="flex items-center gap-2">
               <Layers className="w-4 h-4" />
               Custom
+            </TabsTrigger>
+            <TabsTrigger value="seo" className="flex items-center gap-2">
+              <Search className="w-4 h-4" />
+              SEO
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
@@ -143,6 +153,10 @@ const Admin = () => {
           
           <TabsContent value="custom">
             <AdminCustomSections />
+          </TabsContent>
+
+          <TabsContent value="seo">
+            <AdminSEO />
           </TabsContent>
 
           <TabsContent value="users">
