@@ -31,18 +31,19 @@ router.post('/send-contact', async (req, res) => {
 
     // Get contact settings from site_settings
     const settingsResult = await query(`
-      SELECT 
-        contact_email, 
+      SELECT
+        contact_email,
         notification_email,
         auto_reply_enabled,
         auto_reply_subject,
         auto_reply_message,
         form_enabled,
+        site_url,
         email_service_type,
         gmail_user,
         gmail_app_password,
         resend_api_key
-      FROM site_settings 
+      FROM site_settings
       LIMIT 1
     `);
 
@@ -99,8 +100,8 @@ router.post('/send-contact', async (req, res) => {
     // Send notification email to admin if configured
     if (settings?.notification_email) {
       try {
-        // Get site URL from environment or use localhost for development
-        const siteUrl = process.env.SITE_URL || 'http://localhost:8080';
+        // Get site URL from database settings, fallback to environment or localhost
+        const siteUrl = settings.site_url || process.env.SITE_URL || 'http://localhost:8080';
 
         const emailContent = {
           subject: `Nieuw contactbericht van ${name}`,

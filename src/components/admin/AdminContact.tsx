@@ -23,6 +23,7 @@ interface ContactSettings {
   auto_reply_subject: string;
   auto_reply_message: string;
   notification_email?: string;
+  site_url?: string;
   // Email service settings
   email_service_type?: 'gmail' | 'resend';
   gmail_user?: string;
@@ -38,6 +39,7 @@ const AdminContact = () => {
     auto_reply_enabled: true,
     auto_reply_subject: 'Bedankt voor je bericht',
     auto_reply_message: 'Bedankt voor je bericht! We nemen zo snel mogelijk contact met je op.',
+    site_url: 'http://localhost:8080',
     email_service_type: 'gmail',
     gmail_user: '',
     gmail_app_password: '',
@@ -59,7 +61,7 @@ const AdminContact = () => {
       const backend = getBackendAdapter();
       const { data, error } = await backend
         .from('site_settings')
-        .select('contact_email, contact_phone, contact_address, form_enabled, auto_reply_enabled, auto_reply_subject, auto_reply_message, notification_email, email_service_type, gmail_user, gmail_app_password, resend_api_key')
+        .select('contact_email, contact_phone, contact_address, form_enabled, auto_reply_enabled, auto_reply_subject, auto_reply_message, notification_email, site_url, email_service_type, gmail_user, gmail_app_password, resend_api_key')
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -76,6 +78,7 @@ const AdminContact = () => {
           auto_reply_subject: data.auto_reply_subject || 'Bedankt voor je bericht',
           auto_reply_message: data.auto_reply_message || 'Bedankt voor je bericht! We nemen zo snel mogelijk contact met je op.',
           notification_email: data.notification_email || '',
+          site_url: data.site_url || 'http://localhost:8080',
           // Email service settings
           email_service_type: data.email_service_type || 'gmail',
           gmail_user: data.gmail_user || '',
@@ -138,6 +141,7 @@ const AdminContact = () => {
             auto_reply_subject: settings.auto_reply_subject,
             auto_reply_message: settings.auto_reply_message,
             notification_email: settings.notification_email,
+            site_url: settings.site_url,
             // Email service settings
             email_service_type: settings.email_service_type,
             gmail_user: settings.gmail_user,
@@ -161,6 +165,7 @@ const AdminContact = () => {
             auto_reply_subject: settings.auto_reply_subject,
             auto_reply_message: settings.auto_reply_message,
             notification_email: settings.notification_email,
+            site_url: settings.site_url,
             // Email service settings
             email_service_type: settings.email_service_type,
             gmail_user: settings.gmail_user,
@@ -311,6 +316,19 @@ Sent from your portfolio admin panel.`
                 value={settings.notification_email || ''}
                 onChange={(e) => setSettings(prev => ({ ...prev, notification_email: e.target.value }))}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="site_url">Website URL</Label>
+              <Input
+                id="site_url"
+                type="url"
+                placeholder="https://jouwdomein.nl"
+                value={settings.site_url || ''}
+                onChange={(e) => setSettings(prev => ({ ...prev, site_url: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground">
+                Deze URL wordt gebruikt in e-mail links naar de admin sectie
+              </p>
             </div>
           </div>
 
