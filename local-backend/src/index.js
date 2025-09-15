@@ -175,37 +175,37 @@ Disallow: /`);
 
 // API routes with logging
 console.log('Mounting API routes...');
-app.use('/auth', (req, res, next) => {
+app.use('/api/auth', (req, res, next) => {
   console.log(`Auth route: ${req.method} ${req.path}`);
   next();
 }, authRoutes);
 
-app.use('/database', (req, res, next) => {
+app.use('/api/database', (req, res, next) => {
   console.log(`Database route: ${req.method} ${req.path}`);
   next();
 }, databaseRoutes);
 
-app.use('/storage', (req, res, next) => {
+app.use('/api/storage', (req, res, next) => {
   console.log(`Storage route: ${req.method} ${req.path}`);
   next();
 }, storageRoutes);
 
-app.use('/functions', (req, res, next) => {
+app.use('/api/functions', (req, res, next) => {
   console.log(`Functions route: ${req.method} ${req.path}`);
   next();
 }, functionsRoutes);
 
-app.use('/custom-sections', (req, res, next) => {
+app.use('/api/custom-sections', (req, res, next) => {
   console.log(`Custom Sections route: ${req.method} ${req.path}`);
   next();
 }, customSectionsRoutes);
 
-app.use('/email', (req, res, next) => {
+app.use('/api/email', (req, res, next) => {
   console.log(`Email route: ${req.method} ${req.path}`);
   next();
 }, emailRoutes);
 
-app.use('/seo', (req, res, next) => {
+app.use('/api/seo', (req, res, next) => {
   console.log(`SEO route: ${req.method} ${req.path}`);
   next();
 }, seoRoutes);
