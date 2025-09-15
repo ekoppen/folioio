@@ -104,7 +104,7 @@ export const SEOProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/seo');
+      const response = await fetch('/api/seo');
       const result = await response.json();
 
       if (result.error) {

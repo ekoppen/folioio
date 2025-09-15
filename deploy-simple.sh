@@ -25,6 +25,22 @@ cp -r local-backend "$DEPLOY_DIR/"
 cp docker-compose.simple.yml "$DEPLOY_DIR/docker-compose.yml"
 cp nginx-simple.conf "$DEPLOY_DIR/"
 
+# Copy admin creation scripts
+if [ -f "create-admin.js" ]; then
+    cp create-admin.js "$DEPLOY_DIR/"
+    echo "✅ Admin creation script copied"
+else
+    echo "⚠️  create-admin.js not found in root directory"
+fi
+
+if [ -f "create-admin-wrapper.sh" ]; then
+    cp create-admin-wrapper.sh "$DEPLOY_DIR/create-admin.sh"
+    chmod +x "$DEPLOY_DIR/create-admin.sh"
+    echo "✅ Admin wrapper script copied"
+else
+    echo "⚠️  create-admin-wrapper.sh not found in root directory"
+fi
+
 # Create postgres init directory
 mkdir -p "$DEPLOY_DIR/postgres-config"
 
@@ -265,7 +281,13 @@ docker compose exec postgres psql -U postgres -d portfolio_db
 If the admin user doesn't work, you can create a new one:
 
 \`\`\`bash
-# Set admin role for existing user
+# Option 1: Use the admin creation wrapper (recommended - no Docker knowledge needed)
+./create-admin.sh
+
+# Option 2: Use the admin creation script via Docker
+docker compose exec api-server node /app/../create-admin.js
+
+# Option 3: Set admin role for existing user via database
 docker compose exec postgres psql -U postgres -d portfolio_db -c \\
   "UPDATE profiles SET role = 'admin' WHERE email = '$ADMIN_EMAIL';"
 \`\`\`

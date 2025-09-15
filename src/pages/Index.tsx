@@ -6,6 +6,7 @@ import PortfolioGallery from '@/components/PortfolioGallery';
 import About from '@/components/About';
 import CustomSection from '@/components/CustomSection';
 import SimplifiedFooter from '@/components/SimplifiedFooter';
+import { ContactModal } from '@/components/ContactModal';
 import { SEOMetaTags } from '@/components/SEOMetaTags';
 import { useAccentColor } from '@/hooks/useAccentColor';
 import { getBackendAdapter } from '@/config/backend-config';
@@ -54,14 +55,64 @@ interface CustomSectionData {
 const Index = () => {
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   const [customSections, setCustomSections] = useState<CustomSectionData[]>([]);
-  
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [albums, setAlbums] = useState<Album[]>([]);
+
   // Initialize accent color on page load
   useAccentColor();
 
-  // Fetch custom sections
+  // Fetch custom sections and albums
   useEffect(() => {
     fetchCustomSections();
+    fetchAlbums();
   }, []);
+
+  // Handle hash navigation for contact modal, album deep links, and smart combinations
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+
+      if (hash === '#contact') {
+        setIsContactModalOpen(true);
+        // Remove hash from URL after opening modal
+        window.history.replaceState(null, '', window.location.pathname);
+      } else if (hash.startsWith('#album-')) {
+        // Handle album deep links
+        const albumSlug = hash.substring(7); // Remove '#album-'
+        const targetAlbum = albums.find(album => album.slug === albumSlug);
+
+        if (targetAlbum) {
+          setSelectedAlbum(targetAlbum);
+          // Scroll to top to show the slideshow
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          // Remove hash from URL after selecting album
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      } else if (hash.includes('&')) {
+        // Handle smart URL combinations like #portfolio&album=nature or #about&contact
+        handleSmartCombination(hash);
+      } else if (hash.startsWith('#')) {
+        // Handle standard section scrolling
+        const targetId = hash.substring(1);
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    };
+
+    // Check initial hash on mount (only if albums are loaded)
+    if (albums.length > 0) {
+      handleHashChange();
+    }
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, [albums]); // Depend on albums so it runs when albums are loaded
 
   const fetchCustomSections = async () => {
     try {
@@ -75,6 +126,58 @@ const Index = () => {
     } catch (error) {
       console.error('Error fetching custom sections:', error);
     }
+  };
+
+  const fetchAlbums = async () => {
+    try {
+      const backend = getBackendAdapter();
+      const { data: albumsData, error: albumsError } = await backend
+        .from('albums')
+        .select('*')
+        .eq('is_visible', true)
+        .order('sort_order', { ascending: true });
+
+      if (albumsError) throw albumsError;
+
+      // For deep linking, we only need basic album info (not photos)
+      setAlbums(albumsData || []);
+    } catch (error) {
+      console.error('Error fetching albums for deep linking:', error);
+    }
+  };
+
+  const handleSmartCombination = (hash: string) => {
+    // Parse combinations like #portfolio&album=nature or #about&contact
+    const [sectionPart, ...actionParts] = hash.substring(1).split('&');
+
+    // First, scroll to the section
+    const targetElement = document.getElementById(sectionPart);
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Then, handle additional actions with a delay to allow scrolling
+    setTimeout(() => {
+      actionParts.forEach(actionPart => {
+        if (actionPart === 'contact') {
+          setIsContactModalOpen(true);
+        } else if (actionPart.startsWith('album=')) {
+          const albumSlug = actionPart.substring(6); // Remove 'album='
+          const targetAlbum = albums.find(album => album.slug === albumSlug);
+          if (targetAlbum) {
+            setSelectedAlbum(targetAlbum);
+            // If we're on portfolio section, just select the album
+            // If we're elsewhere, scroll to top to show slideshow
+            if (sectionPart !== 'portfolio') {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }
+        }
+      });
+
+      // Clean up URL after processing
+      window.history.replaceState(null, '', window.location.pathname);
+    }, 500); // Small delay for smooth UX
   };
 
   const handleAlbumSelect = (album: Album) => {
@@ -98,16 +201,26 @@ const Index = () => {
       <Hero selectedAlbum={selectedAlbum} onBackToHome={handleBackToHome} />
       <Slideshow />
       <PortfolioGallery onAlbumSelect={handleAlbumSelect} />
-      <About />
+      <About onContactClick={() => setIsContactModalOpen(true)} />
 
       {/* Custom Sections */}
       {customSections.map((section) => (
-        <CustomSection key={section.id} sectionData={section} />
+        <CustomSection
+          key={section.id}
+          sectionData={section}
+          onContactClick={() => setIsContactModalOpen(true)}
+        />
       ))}
 
       {/* Add padding bottom when footer is in overlay mode to prevent content being hidden */}
       <div className="pb-20" />
       <SimplifiedFooter />
+
+      {/* Contact Modal */}
+      <ContactModal
+        open={isContactModalOpen}
+        onOpenChange={setIsContactModalOpen}
+      />
     </div>
   );
 };

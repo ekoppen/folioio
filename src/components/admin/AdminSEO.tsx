@@ -94,7 +94,7 @@ const AdminSEO = () => {
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/seo');
+      const response = await fetch('/api/seo');
       const result = await response.json();
 
       if (result.error) {
@@ -124,7 +124,7 @@ const AdminSEO = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const response = await fetch('/seo', {
+      const response = await fetch('/api/seo', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

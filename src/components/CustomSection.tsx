@@ -42,6 +42,7 @@ interface CustomSectionData {
 
 interface CustomSectionProps {
   sectionData: CustomSectionData;
+  onContactClick?: () => void;
 }
 
 const iconMap: Record<string, any> = {
@@ -50,7 +51,7 @@ const iconMap: Record<string, any> = {
   TrendingUp, Target, Coffee, Code, Brush
 };
 
-const CustomSection = ({ sectionData }: CustomSectionProps) => {
+const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const { t } = useTranslation();
   const { fontSettings } = useFonts();
@@ -68,9 +69,13 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
       if (targetElement) {
         targetElement.scrollIntoView({ behavior: 'smooth' });
       }
-    } else if (sectionData.button_link === 'contact') {
+    } else if (sectionData.button_link === 'contact' || sectionData.button_link === '#contact') {
       // Open contact modal
-      setIsContactModalOpen(true);
+      if (onContactClick) {
+        onContactClick();
+      } else {
+        setIsContactModalOpen(true);
+      }
     } else if (sectionData.button_link.startsWith('http')) {
       // External link
       window.open(sectionData.button_link, '_blank', 'noopener,noreferrer');
@@ -100,8 +105,12 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
               if (item.stat_link?.startsWith('#')) {
                 const targetElement = document.getElementById(item.stat_link.substring(1));
                 if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth' });
-              } else if (item.stat_link === 'contact') {
-                setIsContactModalOpen(true);
+              } else if (item.stat_link === 'contact' || item.stat_link === '#contact') {
+                if (onContactClick) {
+                  onContactClick();
+                } else {
+                  setIsContactModalOpen(true);
+                }
               } else if (item.stat_link?.startsWith('http')) {
                 window.open(item.stat_link, '_blank', 'noopener,noreferrer');
               } else if (item.stat_link) {
@@ -294,11 +303,13 @@ const CustomSection = ({ sectionData }: CustomSectionProps) => {
         </div>
       </section>
 
-      {/* Contact Modal */}
-      <ContactModal
-        isOpen={isContactModalOpen}
-        onClose={() => setIsContactModalOpen(false)}
-      />
+      {/* Contact Modal - only show if no global handler */}
+      {!onContactClick && (
+        <ContactModal
+          open={isContactModalOpen}
+          onOpenChange={setIsContactModalOpen}
+        />
+      )}
     </>
   );
 };

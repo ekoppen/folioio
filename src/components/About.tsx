@@ -39,7 +39,11 @@ const iconMap: Record<string, any> = {
   Heart
 };
 
-const About = () => {
+interface AboutProps {
+  onContactClick?: () => void;
+}
+
+const About = ({ onContactClick }: AboutProps = {}) => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const { t } = useTranslation();
   const [settings, setSettings] = useState<AboutSettings>({
@@ -213,7 +217,14 @@ const About = () => {
                     style={{ animationDelay: `${index * 0.1}s` }}
                     onClick={() => {
                       if (hasValidUrl) {
-                        if (service.url!.startsWith('#')) {
+                        if (service.url === '#contact') {
+                          // Open contact modal
+                          if (onContactClick) {
+                            onContactClick();
+                          } else {
+                            setIsContactModalOpen(true);
+                          }
+                        } else if (service.url!.startsWith('#')) {
                           const targetElement = document.getElementById(service.url!.substring(1));
                           if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth' });
                         } else if (service.url!.startsWith('http')) {
@@ -287,7 +298,13 @@ const About = () => {
             {/* Contact Button */}
             <div className="mt-8 text-center">
               <Button
-                onClick={() => setIsContactModalOpen(true)}
+                onClick={() => {
+                  if (onContactClick) {
+                    onContactClick();
+                  } else {
+                    setIsContactModalOpen(true);
+                  }
+                }}
                 size="lg"
                 className="text-white font-content"
                 style={{ backgroundColor: 'hsl(var(--dynamic-accent))', borderColor: 'hsl(var(--dynamic-accent))' }}
@@ -300,10 +317,12 @@ const About = () => {
         </div>
       </div>
       
-      <ContactModal 
-        open={isContactModalOpen} 
-        onOpenChange={setIsContactModalOpen} 
-      />
+      {!onContactClick && (
+        <ContactModal
+          open={isContactModalOpen}
+          onOpenChange={setIsContactModalOpen}
+        />
+      )}
     </section>
   );
 };

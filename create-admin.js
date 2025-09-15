@@ -1,9 +1,28 @@
 #!/usr/bin/env node
 
-const { Pool } = require('pg');
-const bcrypt = require('bcrypt');
-const readline = require('readline');
-require('dotenv').config({ path: './local-backend/.env' });
+import { createRequire } from 'module';
+import readline from 'readline';
+
+// Create require function to load CommonJS modules
+const require = createRequire(import.meta.url);
+
+// Load all dependencies from local-backend node_modules
+const { Pool } = require('./local-backend/node_modules/pg');
+const bcrypt = require('./local-backend/node_modules/bcryptjs');
+const dotenv = require('./local-backend/node_modules/dotenv');
+
+dotenv.config({ path: './.env' });
+
+/**
+ * Create Admin User Script
+ *
+ * Creates an admin user for a deployment using direct database access
+ *
+ * Usage (inside deployment directory):
+ *   docker compose exec api-server node /app/../create-admin.js
+ *
+ * Or copy script to container and run interactively
+ */
 
 // Create readline interface for user input
 const rl = readline.createInterface({
@@ -65,13 +84,13 @@ async function createAdmin() {
   console.log('🔧 Portfolio Admin Account Creator\n');
 
   try {
-    // Database connection
+    // Database connection - try Docker first, then localhost
     const pool = new Pool({
-      user: process.env.DB_USER || 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      database: process.env.DB_NAME || 'portfolio',
-      password: process.env.DB_PASSWORD || 'password',
-      port: process.env.DB_PORT || 5432,
+      user: process.env.DATABASE_USER || process.env.POSTGRES_USER || 'postgres',
+      host: process.env.DATABASE_HOST || 'postgres', // Use Docker service name
+      database: process.env.DATABASE_NAME || process.env.POSTGRES_DB || 'portfolio_db',
+      password: process.env.DATABASE_PASSWORD || process.env.POSTGRES_PASSWORD,
+      port: process.env.DATABASE_PORT || 5432,
     });
 
     // Test connection
@@ -97,39 +116,49 @@ async function createAdmin() {
 
     console.log('\n⏳ Creating admin account...');
 
-    // Check if user already exists
-    const existingUser = await pool.query(
-      'SELECT id FROM users WHERE email = $1',
-      [email]
-    );
+    // Hash password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    if (existingUser.rows.length > 0) {
-      console.log('⚠️  User already exists. Updating to admin role...');
-
-      // Hash new password
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-      // Update existing user
-      await pool.query(
-        'UPDATE users SET password_hash = $1, role = $2, updated_at = NOW() WHERE email = $3',
-        [hashedPassword, 'admin', email]
+    try {
+      // Try to create new user
+      const userResult = await pool.query(
+        `INSERT INTO auth.users (email, encrypted_password, email_confirmed_at, created_at, updated_at)
+         VALUES ($1, $2, NOW(), NOW(), NOW()) RETURNING id`,
+        [email, hashedPassword]
       );
 
-      console.log('✅ Existing user updated to admin successfully!');
-    } else {
-      // Hash password
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      const userId = userResult.rows[0].id;
 
-      // Create new admin user
+      // Create profile for the user
       await pool.query(
-        `INSERT INTO users (email, password_hash, role, created_at, updated_at)
+        `INSERT INTO public.profiles (user_id, email, role, created_at, updated_at)
          VALUES ($1, $2, $3, NOW(), NOW())`,
-        [email, hashedPassword, 'admin']
+        [userId, email, 'admin']
       );
 
       console.log('✅ Admin account created successfully!');
+
+    } catch (error) {
+      if (error.code === '23505') { // Unique constraint violation
+        console.log('ℹ️  User already exists. Updating password and admin role...');
+
+        // Update existing user password
+        await pool.query(
+          'UPDATE auth.users SET encrypted_password = $1, updated_at = NOW() WHERE email = $2',
+          [hashedPassword, email]
+        );
+
+        // Update profile role to admin
+        await pool.query(
+          'UPDATE public.profiles SET role = $1, updated_at = NOW() WHERE email = $2',
+          ['admin', email]
+        );
+
+        console.log('✅ Existing user updated to admin successfully!');
+      } else {
+        throw error; // Re-throw if it's a different error
+      }
     }
 
     console.log('\n📋 Account Details:');
@@ -144,9 +173,10 @@ async function createAdmin() {
   } catch (error) {
     console.error('❌ Error:', error.message);
     console.log('\n💡 Make sure:');
-    console.log('   - Database is running');
-    console.log('   - Environment variables are set in local-backend/.env');
+    console.log('   - Database is running (docker compose ps)');
+    console.log('   - Environment variables are set in .env');
     console.log('   - Database has been migrated');
+    console.log('   - You are in the deployment directory');
 
     rl.close();
     process.exit(1);
