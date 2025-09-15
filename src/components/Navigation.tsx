@@ -532,21 +532,66 @@ const Navigation = () => {
         </div>
 
         {isMobileMenuOpen && (
-          <div 
-            className="md:hidden fixed inset-0 top-0 backdrop-blur-sm z-50 pt-16"
+          <div
+            className="md:hidden fixed inset-0 top-0 backdrop-blur-sm z-50"
             style={{ backgroundColor: 'hsla(var(--dynamic-accent) / 0.95)' }}
           >
-            <div className="px-4 py-6 space-y-4">
+            {/* Close button at the top */}
+            <div className="flex justify-end p-4">
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-white hover:text-white/80 transition-colors p-2"
+                aria-label="Sluit menu"
+              >
+                <X className="w-8 h-8" />
+              </button>
+            </div>
+
+            <div className="px-4 py-2 space-y-4">
               <button
                 onClick={() => {
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  scrollToSection('hero');
                   setIsMobileMenuOpen(false);
                 }}
                 className="block text-white/90 hover:text-white transition-colors py-2 w-full text-left"
               >
                 {t('nav.home', 'Home')}
               </button>
-              
+
+              <button
+                onClick={() => {
+                  scrollToSection('portfolio');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block text-white/90 hover:text-white transition-colors py-2 w-full text-left"
+              >
+                {t('nav.portfolio', 'Portfolio')}
+              </button>
+
+              <button
+                onClick={() => {
+                  scrollToSection('about');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block text-white/90 hover:text-white transition-colors py-2 w-full text-left"
+              >
+                {t('nav.about', 'Over Mij')}
+              </button>
+
+              {/* Custom sections in mobile navigation */}
+              {customSections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => {
+                    scrollToSection(`custom-${section.slug}`);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="block text-white/90 hover:text-white transition-colors py-2 w-full text-left"
+                >
+                  {section.title}
+                </button>
+              ))}
+
               {pages.map((page) => (
                 <div key={page.id}>
                   {page.children && page.children.length > 0 ? (

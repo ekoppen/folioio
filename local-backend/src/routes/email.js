@@ -99,6 +99,9 @@ router.post('/send-contact', async (req, res) => {
     // Send notification email to admin if configured
     if (settings?.notification_email) {
       try {
+        // Get site URL from environment or use localhost for development
+        const siteUrl = process.env.SITE_URL || 'http://localhost:8080';
+
         const emailContent = {
           subject: `Nieuw contactbericht van ${name}`,
           html: `
@@ -109,6 +112,15 @@ router.post('/send-contact', async (req, res) => {
             ${subject ? `<p><strong>Onderwerp:</strong> ${subject}</p>` : ''}
             <p><strong>Bericht:</strong></p>
             <p>${message.replace(/\n/g, '<br>')}</p>
+            <hr>
+            <div style="margin: 20px 0;">
+              <a href="${siteUrl}/admin#contact" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                📧 Beantwoord dit bericht in de admin
+              </a>
+            </div>
+            <p style="color: #888; font-size: 13px;">
+              Of ga direct naar: <a href="${siteUrl}/admin#contact" style="color: #007bff;">${siteUrl}/admin#contact</a>
+            </p>
             <hr>
             <p style="color: #666; font-size: 12px;">
               Bericht ontvangen via portfolio contactformulier op ${new Date().toLocaleString('nl-NL')}

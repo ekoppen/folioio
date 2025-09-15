@@ -181,7 +181,8 @@ All colors MUST be HSL.
   }
   
   .section-padding {
-    @apply py-20 px-6;
+    @apply pb-20 px-6;
+    padding-top: calc(5rem + 50px); /* 80px + 50px = 130px totaal */
   }
   
   /* Font utilities */

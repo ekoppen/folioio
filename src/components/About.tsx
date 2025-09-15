@@ -169,16 +169,18 @@ const About = () => {
             </p>
 
             {/* Skills */}
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold mb-4 font-title">{t('about.expertise', 'Expertise')}</h3>
-              <div className="flex flex-wrap gap-2">
-                {settings.skills.map((skill) => (
-                  <Badge key={skill} variant="secondary" className="px-3 py-1">
-                    {t(`skills.${skill.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`, skill)}
-                  </Badge>
-                ))}
+            {settings.skills.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold mb-4 font-title">{t('about.expertise', 'Expertise')}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {settings.skills.map((skill) => (
+                    <Badge key={skill} variant="secondary" className="px-3 py-1">
+                      {t(`skills.${skill.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`, skill)}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-6">
