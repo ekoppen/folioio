@@ -17,6 +17,7 @@ interface AboutSettings {
     icon: string;
     title: string;
     description: string;
+    url?: string;
   }>;
   stats: Array<{
     number: string;
@@ -199,11 +200,27 @@ const About = () => {
             <div className="space-y-6">
               {settings.services.map((service, index) => {
                 const IconComponent = iconMap[service.icon] || Palette;
-                return (
-                  <Card 
-                    key={service.title} 
-                    className="border-portfolio-border hover:shadow-lg transition-all duration-300 animate-scale-in"
+                const hasValidUrl = service.url && service.url.trim() !== '';
+
+                const serviceContent = (
+                  <Card
+                    key={service.title}
+                    className={`border-portfolio-border transition-all duration-300 animate-scale-in ${
+                      hasValidUrl ? 'hover:shadow-lg cursor-pointer' : 'hover:shadow-md'
+                    }`}
                     style={{ animationDelay: `${index * 0.1}s` }}
+                    onClick={() => {
+                      if (hasValidUrl) {
+                        if (service.url!.startsWith('#')) {
+                          const targetElement = document.getElementById(service.url!.substring(1));
+                          if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth' });
+                        } else if (service.url!.startsWith('http')) {
+                          window.open(service.url!, '_blank', 'noopener,noreferrer');
+                        } else {
+                          window.location.href = service.url!;
+                        }
+                      }
+                    }}
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
@@ -212,16 +229,24 @@ const About = () => {
                         </div>
                         <div className="flex-1">
                           <h3 className="text-xl font-semibold mb-2 font-title">
-                            {t(`service.${service.title.toLowerCase().replace(/ /g, '_')}`, service.title)}
+                            {service.title && service.title.trim() !== '' ?
+                              t(`service.${service.title.toLowerCase().replace(/ /g, '_')}`, service.title) :
+                              null
+                            }
                           </h3>
                           <p className="text-muted-foreground font-content">
-                            {t(`service.${service.title.toLowerCase().replace(/ /g, '_')}_desc`, service.description)}
+                            {service.description && service.description.trim() !== '' ?
+                              t(`service.${service.title.toLowerCase().replace(/ /g, '_')}_desc`, service.description) :
+                              null
+                            }
                           </p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 );
+
+                return serviceContent;
               })}
             </div>
 
@@ -268,9 +293,6 @@ const About = () => {
                 <Mail className="w-5 h-5 mr-2" />
                 {t('about.contact_button', 'Neem Contact Op')}
               </Button>
-              <p className="text-sm text-muted-foreground mt-2 font-content">
-                {t('about.contact_subtitle', 'Klaar om samen aan je volgende project te werken?')}
-              </p>
             </div>
           </div>
         </div>

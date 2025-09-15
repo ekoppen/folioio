@@ -19,6 +19,7 @@ interface AboutSettings {
     icon: string;
     title: string;
     description: string;
+    url?: string;
   }>;
   stats: Array<{
     number: string;
@@ -188,7 +189,7 @@ const AdminAbout = () => {
   const addService = () => {
     setSettings(prev => ({
       ...prev,
-      services: [...prev.services, { icon: 'Palette', title: 'Nieuwe Service', description: 'Beschrijving van de service' }]
+      services: [...prev.services, { icon: 'Palette', title: '', description: '', url: '' }]
     }));
   };
 
@@ -522,7 +523,7 @@ const AdminAbout = () => {
                       <Input
                         value={service.title}
                         onChange={(e) => updateService(index, 'title', e.target.value)}
-                        placeholder="Service Titel"
+                        placeholder="Laat leeg om niet weer te geven"
                         className="flex-1"
                       />
                       <Button
@@ -536,8 +537,13 @@ const AdminAbout = () => {
                     <Textarea
                       value={service.description}
                       onChange={(e) => updateService(index, 'description', e.target.value)}
-                      placeholder="Service Beschrijving"
+                      placeholder="Laat leeg om niet weer te geven"
                       rows={2}
+                    />
+                    <Input
+                      value={service.url || ''}
+                      onChange={(e) => updateService(index, 'url', e.target.value)}
+                      placeholder="URL (optioneel) - bijv. https://example.com of #sectie"
                     />
                   </div>
                 </Card>
