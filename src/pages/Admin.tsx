@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import AdminUsers from '@/components/admin/AdminUsers';
 import AdminSEO from '@/components/admin/AdminSEO';
 
 const Admin = () => {
+  const [activeTab, setActiveTab] = useState('settings');
   const { user, isAdmin, signOut, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -27,6 +28,30 @@ const Admin = () => {
       navigate('/auth');
     }
   }, [user, isAdmin, loading, navigate]);
+
+  // Handle admin deep links
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.substring(1); // Remove '#'
+      const validTabs = ['settings', 'albums', 'editor', 'about', 'contact', 'custom', 'seo', 'users', 'account', 'footer'];
+
+      if (hash && validTabs.includes(hash)) {
+        setActiveTab(hash);
+        // Remove hash from URL after setting tab
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    };
+
+    // Check initial hash on mount
+    handleHashChange();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -79,7 +104,7 @@ const Admin = () => {
       </div>
 
       <div className="container mx-auto p-6">
-        <Tabs defaultValue="settings" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-11 lg:w-fit lg:grid-cols-11">
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
