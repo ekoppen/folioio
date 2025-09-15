@@ -8,6 +8,34 @@ A professional portfolio content management system with local backend support, e
 
 👉 **[Email Setup Guide](EMAIL_SETUP.md)** - Complete instructions for configuring email services
 
+## 🔐 Admin Account Setup
+
+**Create Admin Account**: Use the built-in script to easily create an admin account:
+
+```bash
+# Method 1: Using npm script (recommended)
+npm run create-admin
+
+# Method 2: Direct execution
+node create-admin.js
+```
+
+The script will:
+- ✅ Connect to your database
+- ✅ Prompt for email and password
+- ✅ Hash the password securely
+- ✅ Create admin user or update existing user
+- ✅ Provide login instructions
+
+**Requirements:**
+- Database must be running
+- Environment variables set in `local-backend/.env`
+- Database migrations completed
+
+After creating an admin account, you can access:
+- **Login**: `/auth`
+- **Admin Panel**: `/admin`
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/e7a37f36-cd1c-48f8-bf75-76218e72287e
