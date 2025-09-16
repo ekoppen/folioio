@@ -19,15 +19,18 @@ const ProtectedImage: React.FC<ProtectedImageProps> = ({ src, alt, className = '
     return false;
   };
 
+  // For contain mode, use different approach to ensure image is properly centered and sized
+  const isContainMode = objectFit === 'contain';
+
   return (
-    <div className={`${className} relative w-full h-full`}>
+    <div className={`${className} relative w-full h-full ${isContainMode ? 'flex items-center justify-center bg-black/5' : ''}`}>
       <img
         src={src}
         alt={alt}
-        className={`w-full h-full select-none pointer-events-none`}
+        className={`select-none pointer-events-none ${isContainMode ? 'max-w-full max-h-full object-contain' : 'w-full h-full'}`}
         style={{
           ...style,
-          objectFit: objectFit,
+          objectFit: isContainMode ? 'contain' : objectFit,
           userSelect: 'none',
           WebkitUserSelect: 'none',
           MozUserSelect: 'none',

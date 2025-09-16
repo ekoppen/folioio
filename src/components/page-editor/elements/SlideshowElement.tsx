@@ -137,13 +137,13 @@ export const SlideshowElement: React.FC<SlideshowElementProps> = ({ settings }) 
             key={photo.id}
             className={`absolute inset-0 ${getTransitionClass()} ${
               index === currentSlide ? 'opacity-100' : 'opacity-0'
-            }`}
+            } ${objectFit === 'contain' ? 'flex items-center justify-center bg-black/5' : ''}`}
           >
             <img
               src={photo.file_url}
               alt={photo.alt_text || photo.filename}
-              className="w-full h-full"
-              style={{ objectFit: objectFit }}
+              className={objectFit === 'contain' ? 'max-w-full max-h-full object-contain' : 'w-full h-full'}
+              style={{ objectFit: objectFit === 'contain' ? 'contain' : objectFit }}
             />
           </div>
         ))}
