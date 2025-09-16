@@ -74,7 +74,13 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
     if (sectionData.button_link.startsWith('#')) {
       // Internal anchor link - smooth scroll
       const targetId = sectionData.button_link.substring(1);
-      const targetElement = document.getElementById(targetId);
+      let targetElement = document.getElementById(targetId);
+
+      // If not found, try with 'custom-' prefix
+      if (!targetElement) {
+        targetElement = document.getElementById(`custom-${targetId}`);
+      }
+
       if (targetElement) {
         targetElement.scrollIntoView({ behavior: 'smooth' });
       }
@@ -112,7 +118,14 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
           return (
             <div key={index} className="cursor-pointer transition-transform hover:scale-105" onClick={() => {
               if (item.stat_link?.startsWith('#')) {
-                const targetElement = document.getElementById(item.stat_link.substring(1));
+                const targetId = item.stat_link.substring(1);
+                let targetElement = document.getElementById(targetId);
+
+                // If not found, try with 'custom-' prefix
+                if (!targetElement) {
+                  targetElement = document.getElementById(`custom-${targetId}`);
+                }
+
                 if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth' });
               } else if (item.stat_link === 'contact' || item.stat_link === '#contact') {
                 if (onContactClick) {
@@ -182,7 +195,14 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
               onClick={() => {
                 if (!item.button_link) return;
                 if (item.button_link.startsWith('#')) {
-                  const targetElement = document.getElementById(item.button_link.substring(1));
+                  const targetId = item.button_link.substring(1);
+                  let targetElement = document.getElementById(targetId);
+
+                  // If not found, try with 'custom-' prefix
+                  if (!targetElement) {
+                    targetElement = document.getElementById(`custom-${targetId}`);
+                  }
+
                   if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth' });
                 } else if (item.button_link === 'contact') {
                   setIsContactModalOpen(true);
@@ -324,7 +344,13 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
                     // Handle different types of links (same as legacy button)
                     if (button.link.startsWith('#')) {
                       const targetId = button.link.substring(1);
-                      const targetElement = document.getElementById(targetId);
+                      let targetElement = document.getElementById(targetId);
+
+                      // If not found, try with 'custom-' prefix
+                      if (!targetElement) {
+                        targetElement = document.getElementById(`custom-${targetId}`);
+                      }
+
                       if (targetElement) {
                         targetElement.scrollIntoView({ behavior: 'smooth' });
                       }

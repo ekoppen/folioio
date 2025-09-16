@@ -9,6 +9,7 @@ import SimplifiedFooter from '@/components/SimplifiedFooter';
 import { ContactModal } from '@/components/ContactModal';
 import { SEOMetaTags } from '@/components/SEOMetaTags';
 import { useAccentColor } from '@/hooks/useAccentColor';
+import { useScrollPosition } from '@/hooks/useScrollPosition';
 import { getBackendAdapter } from '@/config/backend-config';
 
 interface Photo {
@@ -60,6 +61,9 @@ const Index = () => {
 
   // Initialize accent color on page load
   useAccentColor();
+
+  // Initialize scroll position management
+  useScrollPosition();
 
   // Fetch custom sections and albums
   useEffect(() => {
@@ -113,6 +117,36 @@ const Index = () => {
       window.removeEventListener('hashchange', handleHashChange);
     };
   }, [albums]); // Depend on albums so it runs when albums are loaded
+
+  // Additional hash handler for custom sections - runs independently
+  useEffect(() => {
+    const handleCustomSectionHash = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#') && !hash.startsWith('#album-') && hash !== '#contact') {
+        const targetId = hash.substring(1);
+        let targetElement = document.getElementById(targetId);
+
+        // If not found, try with 'custom-' prefix for custom sections
+        if (!targetElement) {
+          targetElement = document.getElementById(`custom-${targetId}`);
+        }
+
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    };
+
+    // Check initial hash on mount
+    handleCustomSectionHash();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleCustomSectionHash);
+
+    return () => {
+      window.removeEventListener('hashchange', handleCustomSectionHash);
+    };
+  }, [customSections]); // Depend on custom sections so it runs when they are loaded
 
   const fetchCustomSections = async () => {
     try {
