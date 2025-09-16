@@ -127,6 +127,7 @@ const Navigation = () => {
         .from('page_builder_pages')
         .select('id, name, slug, parent_page_id, menu_order')
         .eq('is_published', true)
+        .eq('is_homepage', false)
         .order('menu_order');
         
       if (data) {
@@ -363,7 +364,7 @@ const Navigation = () => {
             </div>
           )}
 
-          <div ref={navigationRef} className={`${isOverlapping ? 'hidden' : 'hidden md:flex'} items-center justify-center space-x-6 lg:space-x-8 absolute left-1/2 transform -translate-x-1/2 z-10`}>
+          <div ref={navigationRef} className={`transition-opacity duration-200 ${isOverlapping ? 'opacity-0 pointer-events-none' : 'opacity-100'} hidden md:flex items-center justify-center space-x-6 lg:space-x-8 absolute left-1/2 transform -translate-x-1/2 z-10`}>
             <button
               onClick={() => scrollToSection('hero')}
               className="text-white/90 hover:text-white transition-colors"
@@ -498,7 +499,7 @@ const Navigation = () => {
             </div>
           )}
 
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-4 absolute right-4 top-1/2 transform -translate-y-1/2 z-20">
             {/* <LanguageSwitcher /> */}
             {user ? (
               <>
@@ -514,10 +515,9 @@ const Navigation = () => {
                 </Button>
               </>
             ) : (
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="ghost" size="icon" className="w-8 h-8">
                   <Link to="/auth">
-                    <LogIn className="w-4 h-4 mr-2" />
-                    {t('nav.login', 'Login')}
+                    <LogIn className="w-4 h-4" />
                   </Link>
               </Button>
             )}
@@ -526,7 +526,7 @@ const Navigation = () => {
           <Button
             variant="ghost"
             size="sm"
-            className={`${isOverlapping ? 'block' : 'md:hidden'} text-white`}
+            className={`transition-opacity duration-200 ${isOverlapping ? 'opacity-100' : 'opacity-100 md:opacity-0 md:pointer-events-none'} text-white`}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -661,13 +661,12 @@ const Navigation = () => {
                     </button>
                   </>
                 ) : (
-                  <Link 
+                  <Link
                     to="/auth"
-                    className="block text-white/90 hover:text-white transition-colors py-2"
+                    className="flex items-center justify-center w-8 h-8 text-white/90 hover:text-white transition-colors rounded"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    <LogIn className="w-4 h-4 mr-2 inline" />
-                    {t('nav.login', 'Login')}
+                    <LogIn className="w-4 h-4" />
                   </Link>
                 )}
               </div>

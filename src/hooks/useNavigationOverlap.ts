@@ -39,9 +39,9 @@ export function useNavigationOverlap(): UseNavigationOverlapReturn {
       // Consider overlapping if both horizontal and vertical overlap exist
       const overlapping = horizontalOverlap && verticalOverlap;
 
-      // Add some buffer space (20px) to prevent tight layouts
-      const logoRightWithBuffer = logoRect.right + 20;
-      const navLeftWithBuffer = navRect.left - 20;
+      // Add some buffer space (10px) to prevent tight layouts, less aggressive
+      const logoRightWithBuffer = logoRect.right + 10;
+      const navLeftWithBuffer = navRect.left - 10;
       const bufferOverlap = logoRightWithBuffer > navLeftWithBuffer && verticalOverlap;
 
       setIsOverlapping(overlapping || bufferOverlap);

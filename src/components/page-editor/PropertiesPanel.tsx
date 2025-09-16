@@ -669,6 +669,24 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 </div>
               </div>
             )}
+            <div>
+              <Label>Foto weergave</Label>
+              <Select
+                value={element.settings?.objectFit || 'cover'}
+                onValueChange={(value: 'cover' | 'contain' | 'fill' | 'scale-down' | 'none') => updateSettings({ objectFit: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cover">Vullen (cover)</SelectItem>
+                  <SelectItem value="contain">Geheel zichtbaar (contain)</SelectItem>
+                  <SelectItem value="fill">Uitrekken (fill)</SelectItem>
+                  <SelectItem value="scale-down">Verkleinen indien nodig</SelectItem>
+                  <SelectItem value="none">Originele grootte</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
       )}

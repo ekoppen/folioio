@@ -5,9 +5,10 @@ interface ProtectedImageProps {
   alt: string;
   className?: string;
   style?: React.CSSProperties;
+  objectFit?: 'cover' | 'contain' | 'fill' | 'scale-down' | 'none';
 }
 
-const ProtectedImage: React.FC<ProtectedImageProps> = ({ src, alt, className = '', style = {} }) => {
+const ProtectedImage: React.FC<ProtectedImageProps> = ({ src, alt, className = '', style = {}, objectFit = 'cover' }) => {
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     return false;
@@ -23,7 +24,7 @@ const ProtectedImage: React.FC<ProtectedImageProps> = ({ src, alt, className = '
       <img
         src={src}
         alt={alt}
-        className="w-full h-full object-cover select-none pointer-events-none"
+        className={`w-full h-full object-${objectFit} select-none pointer-events-none`}
         style={{
           ...style,
           userSelect: 'none',

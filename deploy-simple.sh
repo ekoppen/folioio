@@ -158,11 +158,19 @@ npm run build
 # Create data directories for bind mounts
 echo "🔧 Creating data directories for bind mounts..."
 mkdir -p data/postgres data/minio
-echo "✅ Data directories created"
+
+# Check if this is a fresh install (no existing data)
+if [ ! "$(ls -A data/postgres 2>/dev/null)" ]; then
+    echo "✅ Fresh install detected - new data directories created"
+    export FRESH_INSTALL=true
+else
+    echo "🔄 Existing data found - updating deployment"
+    export FRESH_INSTALL=false
+fi
+echo "✅ Data directories ready"
 
 # Start the stack
 echo "🐳 Starting Docker stack..."
-docker compose down 2>/dev/null
 docker compose up -d --build
 
 # Debug: Check environment variables
@@ -176,7 +184,13 @@ echo "✅ Bind mounts ready - no permission setup needed on macOS"
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to start..."
-sleep 15
+if [ "$FRESH_INSTALL" = "true" ]; then
+    echo "   Fresh database needs extra time to initialize..."
+    sleep 45
+else
+    echo "   Existing database - shorter wait time..."
+    sleep 20
+fi
 
 # Check if API server is running
 echo "🔍 Checking API server status..."

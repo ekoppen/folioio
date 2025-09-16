@@ -80,6 +80,7 @@ interface SiteSettings {
   slideshow_info_card_text_size?: number;
   slideshow_show_arrows?: boolean;
   slideshow_show_dots?: boolean;
+  slideshow_object_fit?: string;
 }
 
 export const AdminSettings = () => {
@@ -142,7 +143,8 @@ export const AdminSettings = () => {
     slideshow_info_card_position: 'bottom-left',
     slideshow_info_card_text_size: 14,
     slideshow_show_arrows: true,
-    slideshow_show_dots: true
+    slideshow_show_dots: true,
+    slideshow_object_fit: 'cover'
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -209,7 +211,7 @@ export const AdminSettings = () => {
         'custom_font_family', 'custom_font_url', 'title_font_family', 'title_font_url',
         'content_font_family', 'content_font_url', 'slideshow_show_arrows', 'slideshow_show_dots',
         'slideshow_interval', 'slideshow_transition', 'slideshow_info_card_enabled', 'slideshow_info_card_position',
-        'slideshow_info_card_opacity', 'slideshow_info_card_radius', 'slideshow_info_card_text_size',
+        'slideshow_info_card_opacity', 'slideshow_info_card_radius', 'slideshow_info_card_text_size', 'slideshow_object_fit',
         'home_show_buttons', 'home_show_title_overlay', 'portfolio_enabled', 'portfolio_title', 'portfolio_description',
         'logo_position', 'logo_height', 'logo_margin_top', 'logo_margin_left', 'logo_shadow',
         'header_transparent', 'header_blur', 'header_background_opacity', 'show_site_title', 'footer_enabled',
@@ -1240,6 +1242,21 @@ export const AdminSettings = () => {
                 <SelectContent>
                   <SelectItem value="fade">Fade</SelectItem>
                   <SelectItem value="slide">Slide</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="slideshow_object_fit">Foto weergave</Label>
+              <Select value={settings.slideshow_object_fit || 'cover'} onValueChange={(value) => setSettings({...settings, slideshow_object_fit: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cover">Vullen (cover)</SelectItem>
+                  <SelectItem value="contain">Geheel zichtbaar (contain)</SelectItem>
+                  <SelectItem value="fill">Uitrekken (fill)</SelectItem>
+                  <SelectItem value="scale-down">Verkleinen indien nodig</SelectItem>
+                  <SelectItem value="none">Originele grootte</SelectItem>
                 </SelectContent>
               </Select>
             </div>

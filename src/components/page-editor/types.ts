@@ -69,7 +69,8 @@ export interface PageElement {
     showIndicators?: boolean;
     overlay?: boolean;
     overlayOpacity?: number;
-    // Hero settings  
+    objectFit?: 'cover' | 'contain' | 'fill' | 'scale-down' | 'none';
+    // Hero settings
     siteTitle?: string;
     siteTagline?: string;
     showButtons?: boolean;

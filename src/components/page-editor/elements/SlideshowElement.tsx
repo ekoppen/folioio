@@ -23,6 +23,7 @@ interface SlideshowElementProps {
     showIndicators?: boolean;
     overlay?: boolean;
     overlayOpacity?: number;
+    objectFit?: 'cover' | 'contain' | 'fill' | 'scale-down' | 'none';
   };
 }
 
@@ -40,6 +41,7 @@ export const SlideshowElement: React.FC<SlideshowElementProps> = ({ settings }) 
     showIndicators = true,
     overlay = true,
     overlayOpacity = 40,
+    objectFit = 'cover',
   } = settings || {};
 
   useEffect(() => {
@@ -140,7 +142,7 @@ export const SlideshowElement: React.FC<SlideshowElementProps> = ({ settings }) 
             <img
               src={photo.file_url}
               alt={photo.alt_text || photo.filename}
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-${objectFit}`}
             />
           </div>
         ))}
