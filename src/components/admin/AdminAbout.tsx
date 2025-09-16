@@ -35,6 +35,7 @@ interface AboutSettings {
   quote_text?: string;  // Keep for backward compatibility
   quote_author?: string; // Keep for backward compatibility
   profile_photo_url?: string;
+  background_color?: string;  // New background color field
 }
 
 const iconMap: Record<string, any> = {
@@ -70,7 +71,8 @@ const AdminAbout = () => {
     quotes: [
       { text: 'Creativiteit is niet wat je ziet, maar wat je anderen laat zien.', author: 'Edgar Degas' }
     ],
-    profile_photo_url: undefined
+    profile_photo_url: undefined,
+    background_color: undefined
   });
   
   const [loading, setLoading] = useState(true);
@@ -141,7 +143,8 @@ const AdminAbout = () => {
           services: (data.services as AboutSettings['services']) || [],
           stats: (data.stats as AboutSettings['stats']) || [],
           quotes: quotes,
-          profile_photo_url: data.profile_photo_url
+          profile_photo_url: data.profile_photo_url,
+          background_color: data.background_color
         });
       }
     } catch (error) {
@@ -170,7 +173,8 @@ const AdminAbout = () => {
         // Keep backward compatibility: also save first quote as quote_text/quote_author
         quote_text: settings.quotes.length > 0 ? settings.quotes[0].text : '',
         quote_author: settings.quotes.length > 0 ? settings.quotes[0].author : '',
-        profile_photo_url: settings.profile_photo_url
+        profile_photo_url: settings.profile_photo_url,
+        background_color: settings.background_color
       };
 
       // Only include id if it exists
@@ -504,6 +508,35 @@ const AdminAbout = () => {
                 onChange={(e) => setSettings(prev => ({ ...prev, main_title: e.target.value }))}
                 placeholder="Over Mij"
               />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Achtergrondkleur sectie</label>
+              <div className="flex gap-2 items-center">
+                <Input
+                  type="color"
+                  value={settings.background_color || '#ffffff'}
+                  onChange={(e) => setSettings(prev => ({ ...prev, background_color: e.target.value }))}
+                  className="w-20 h-10 p-1 rounded cursor-pointer"
+                />
+                <Input
+                  value={settings.background_color || ''}
+                  onChange={(e) => setSettings(prev => ({ ...prev, background_color: e.target.value || undefined }))}
+                  placeholder="#ffffff of transparent voor geen kleur"
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => setSettings(prev => ({ ...prev, background_color: undefined }))}
+                  size="sm"
+                  variant="outline"
+                  title="Reset naar standaard"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Laat leeg of gebruik 'transparent' voor geen achtergrondkleur
+              </p>
             </div>
           </CardContent>
         </Card>

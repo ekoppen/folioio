@@ -60,6 +60,7 @@ interface CustomSection {
   content_elements?: ContentElement[];  // New grid-based content
   button_text?: string;
   button_link?: string;
+  background_color?: string;  // New background color field
 }
 
 interface CustomSectionEditorProps {
@@ -102,7 +103,8 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
     content_right: [] as ContentRightItem[],
     content_elements: [] as ContentElement[],  // Add grid elements
     button_text: '',
-    button_link: ''
+    button_link: '',
+    background_color: undefined
   });
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -136,7 +138,8 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
         content_right: section.content_right || [],
         content_elements: contentElements,
         button_text: section.button_text || '',
-        button_link: section.button_link || ''
+        button_link: section.button_link || '',
+        background_color: section.background_color
       });
     } else {
       // Reset for new section
@@ -153,7 +156,8 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
         content_right: [],
         content_elements: [],
         button_text: '',
-        button_link: ''
+        button_link: '',
+        background_color: undefined
       });
     }
   }, [section]);
@@ -412,6 +416,37 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
                     checked={formData.show_hero_button}
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, show_hero_button: checked }))}
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="background-color">Achtergrondkleur sectie</Label>
+                  <div className="flex gap-2 items-center mt-2">
+                    <Input
+                      id="background-color"
+                      type="color"
+                      value={formData.background_color || '#ffffff'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, background_color: e.target.value }))}
+                      className="w-20 h-10 p-1 rounded cursor-pointer"
+                    />
+                    <Input
+                      value={formData.background_color || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, background_color: e.target.value || undefined }))}
+                      placeholder="#ffffff of transparent voor geen kleur"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, background_color: undefined }))}
+                      size="sm"
+                      variant="outline"
+                      title="Reset naar standaard"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Laat leeg of gebruik 'transparent' voor geen achtergrondkleur
+                  </p>
                 </div>
               </CardContent>
             </Card>
