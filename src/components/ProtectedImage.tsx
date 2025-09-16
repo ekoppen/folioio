@@ -24,9 +24,10 @@ const ProtectedImage: React.FC<ProtectedImageProps> = ({ src, alt, className = '
       <img
         src={src}
         alt={alt}
-        className={`w-full h-full object-${objectFit} select-none pointer-events-none`}
+        className={`w-full h-full select-none pointer-events-none`}
         style={{
           ...style,
+          objectFit: objectFit,
           userSelect: 'none',
           WebkitUserSelect: 'none',
           MozUserSelect: 'none',
@@ -39,7 +40,7 @@ const ProtectedImage: React.FC<ProtectedImageProps> = ({ src, alt, className = '
         draggable={false}
       />
       {/* Invisible overlay to prevent right-click */}
-      <div 
+      <div
         className="absolute inset-0 z-10 pointer-events-auto"
         onContextMenu={handleContextMenu}
         onDragStart={handleDragStart}

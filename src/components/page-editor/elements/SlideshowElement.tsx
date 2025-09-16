@@ -142,7 +142,8 @@ export const SlideshowElement: React.FC<SlideshowElementProps> = ({ settings }) 
             <img
               src={photo.file_url}
               alt={photo.alt_text || photo.filename}
-              className={`w-full h-full object-${objectFit}`}
+              className="w-full h-full"
+              style={{ objectFit: objectFit }}
             />
           </div>
         ))}
