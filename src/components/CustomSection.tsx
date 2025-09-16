@@ -3,11 +3,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ContactModal } from '@/components/ContactModal';
+import { ContentGridRenderer } from '@/components/ContentGridRenderer';
 import ProtectedImage from '@/components/ProtectedImage';
 import { getBackendAdapter } from '@/config/backend-config';
-import { 
-  Palette, Camera, Laptop, Heart, Mail, Monitor, 
-  Smartphone, Globe, Users, Star, Award, 
+import { ContentElement } from '@/types/content-grid';
+import {
+  Palette, Camera, Laptop, Heart, Mail, Monitor,
+  Smartphone, Globe, Users, Star, Award,
   TrendingUp, Target, Coffee, Code, Brush
 } from 'lucide-react';
 import { useAccentColor } from '@/hooks/useAccentColor';
@@ -36,8 +38,14 @@ interface CustomSectionData {
     button_link?: string;
     stat_link?: string;
   }>;
+  content_elements?: ContentElement[];  // New grid-based content
   button_text?: string;
   button_link?: string;
+  buttons?: Array<{
+    text: string;
+    link: string;
+    style?: 'primary' | 'secondary' | 'outline';
+  }>;
   background_color?: string;  // New background color field
 }
 
@@ -241,75 +249,122 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
             </h2>
           </div>
 
-          {/* Two-column content */}
-          <div className="grid lg:grid-cols-2 gap-12 items-start">
-            {/* Left Column - Text Content */}
-            <div className="space-y-6">
-              <div className="prose prose-lg max-w-none dark:prose-invert">
-                <p
-                  className="text-muted-foreground leading-relaxed"
-                  style={{
-                    fontFamily: fontSettings.content_font_family ?
-                      `'${fontSettings.content_font_family}', sans-serif` :
-                      'var(--font-content, "Roboto", sans-serif)'
-                  }}
-                >
-                  {sectionData.content_left}
-                </p>
+          {/* Content Section - Use grid renderer if available, otherwise legacy layout */}
+          {sectionData.content_elements && sectionData.content_elements.length > 0 ? (
+            <div className="mb-12">
+              <ContentGridRenderer elements={sectionData.content_elements} />
+            </div>
+          ) : (
+            /* Legacy Two-column content */
+            <div className="grid lg:grid-cols-2 gap-12 items-start">
+              {/* Left Column - Text Content */}
+              <div className="space-y-6">
+                <div className="prose prose-lg max-w-none dark:prose-invert">
+                  <p
+                    className="text-muted-foreground leading-relaxed"
+                    style={{
+                      fontFamily: fontSettings.content_font_family ?
+                        `'${fontSettings.content_font_family}', sans-serif` :
+                        'var(--font-content, "Roboto", sans-serif)'
+                    }}
+                  >
+                    {sectionData.content_left}
+                  </p>
+                </div>
               </div>
 
-              {/* Button */}
-              {sectionData.button_text && (
-                <div className="pt-4">
-                  <Button 
-                    onClick={handleButtonClick}
-                    className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-3 text-lg"
-                  >
-                    {sectionData.button_text}
-                  </Button>
-                </div>
-              )}
+              {/* Right Column - Elements */}
+              <div className="space-y-6">
+                {/* Stats - displayed in a grid */}
+                {sectionData.content_right.filter(item => item.type === 'stat').length > 0 && (
+                  <div className="grid grid-cols-3 gap-6 mb-8">
+                    {sectionData.content_right
+                      .filter(item => item.type === 'stat')
+                      .map((item, index) => renderContentRightItem(item, index))}
+                  </div>
+                )}
+
+                {/* Services - displayed as cards */}
+                {sectionData.content_right.filter(item => item.type === 'service').length > 0 && (
+                  <div className="grid gap-4 mb-8">
+                    {sectionData.content_right
+                      .filter(item => item.type === 'service')
+                      .map((item, index) => renderContentRightItem(item, index))}
+                  </div>
+                )}
+
+                {/* Skills - displayed as badges */}
+                {sectionData.content_right.filter(item => item.type === 'skill').length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-8">
+                    {sectionData.content_right
+                      .filter(item => item.type === 'skill')
+                      .map((item, index) => renderContentRightItem(item, index))}
+                  </div>
+                )}
+
+                {/* Buttons - displayed as individual buttons */}
+                {sectionData.content_right.filter(item => item.type === 'button').length > 0 && (
+                  <div className="space-y-3">
+                    {sectionData.content_right
+                      .filter(item => item.type === 'button')
+                      .map((item, index) => renderContentRightItem(item, index))}
+                  </div>
+                )}
+              </div>
             </div>
+          )}
 
-            {/* Right Column - Elements */}
-            <div className="space-y-6">
-              {/* Stats - displayed in a grid */}
-              {sectionData.content_right.filter(item => item.type === 'stat').length > 0 && (
-                <div className="grid grid-cols-3 gap-6 mb-8">
-                  {sectionData.content_right
-                    .filter(item => item.type === 'stat')
-                    .map((item, index) => renderContentRightItem(item, index))}
-                </div>
-              )}
-
-              {/* Services - displayed as cards */}
-              {sectionData.content_right.filter(item => item.type === 'service').length > 0 && (
-                <div className="grid gap-4 mb-8">
-                  {sectionData.content_right
-                    .filter(item => item.type === 'service')
-                    .map((item, index) => renderContentRightItem(item, index))}
-                </div>
-              )}
-
-              {/* Skills - displayed as badges */}
-              {sectionData.content_right.filter(item => item.type === 'skill').length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-8">
-                  {sectionData.content_right
-                    .filter(item => item.type === 'skill')
-                    .map((item, index) => renderContentRightItem(item, index))}
-                </div>
-              )}
-
-              {/* Buttons - displayed as individual buttons */}
-              {sectionData.content_right.filter(item => item.type === 'button').length > 0 && (
-                <div className="space-y-3">
-                  {sectionData.content_right
-                    .filter(item => item.type === 'button')
-                    .map((item, index) => renderContentRightItem(item, index))}
-                </div>
-              )}
+          {/* Buttons - show multiple buttons or legacy single button */}
+          {(sectionData.buttons && sectionData.buttons.length > 0) ? (
+            <div className="flex flex-wrap gap-4 justify-center mt-8">
+              {sectionData.buttons.map((button, index) => (
+                <Button
+                  key={index}
+                  onClick={() => {
+                    // Handle different types of links (same as legacy button)
+                    if (button.link.startsWith('#')) {
+                      const targetId = button.link.substring(1);
+                      const targetElement = document.getElementById(targetId);
+                      if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    } else if (button.link === 'contact' || button.link === '#contact') {
+                      if (onContactClick) {
+                        onContactClick();
+                      } else {
+                        setIsContactModalOpen(true);
+                      }
+                    } else if (button.link.startsWith('http')) {
+                      window.open(button.link, '_blank', 'noopener,noreferrer');
+                    } else {
+                      window.location.href = button.link;
+                    }
+                  }}
+                  variant={
+                    button.style === 'secondary' ? 'secondary' :
+                    button.style === 'outline' ? 'outline' : 'default'
+                  }
+                  className={
+                    button.style === 'primary' || !button.style
+                      ? "bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-3 text-lg"
+                      : "font-semibold px-8 py-3 text-lg"
+                  }
+                >
+                  {button.text}
+                </Button>
+              ))}
             </div>
-          </div>
+          ) : sectionData.button_text && (
+            /* Legacy single button */
+            <div className="text-center mt-8">
+              <Button
+                onClick={handleButtonClick}
+                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-3 text-lg"
+              >
+                {sectionData.button_text}
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 

@@ -159,36 +159,36 @@ const About = ({ onContactClick }: AboutProps = {}) => {
       style={sectionStyle}
     >
       <div className="container mx-auto">
-        {/* Header Section */}
-        <div className="animate-slide-in-left mb-12">
-          <div className="flex items-start gap-6 mb-6">
-            {settings.profile_photo_url ? (
-              <img
-                src={settings.profile_photo_url}
-                alt="Profielfoto"
-                className="w-32 h-32 object-cover rounded-lg flex-shrink-0 shadow-lg"
-                onError={(e) => console.log('Image failed to load:', e)}
-                onLoad={() => console.log('Image loaded successfully:', settings.profile_photo_url)}
-              />
-            ) : (
-              console.log('No profile photo URL found:', settings.profile_photo_url)
-            )}
-            <div className="flex-1">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-title">
-                {t('about_settings.main_title', settings.main_title).split(' ')[0]}{' '}
-                <span style={{ color: 'hsl(var(--dynamic-accent))' }}>
-                  {t('about_settings.main_title', settings.main_title).split(' ').slice(1).join(' ')}
-                </span>
-              </h2>
+        {/* Legacy Header Section - only show if no grid content */}
+        {(!settings.content_elements || settings.content_elements.length === 0) && (
+          <div className="animate-slide-in-left mb-12">
+            <div className="flex items-start gap-6 mb-6">
+              {settings.profile_photo_url ? (
+                <img
+                  src={settings.profile_photo_url}
+                  alt="Profielfoto"
+                  className="w-32 h-32 object-cover rounded-lg flex-shrink-0 shadow-lg"
+                  onError={(e) => console.log('Image failed to load:', e)}
+                  onLoad={() => console.log('Image loaded successfully:', settings.profile_photo_url)}
+                />
+              ) : (
+                console.log('No profile photo URL found:', settings.profile_photo_url)
+              )}
+              <div className="flex-1">
+                <h2 className="text-4xl md:text-5xl font-bold mb-4 font-title">
+                  {t('about_settings.main_title', settings.main_title).split(' ')[0]}{' '}
+                  <span style={{ color: 'hsl(var(--dynamic-accent))' }}>
+                    {t('about_settings.main_title', settings.main_title).split(' ').slice(1).join(' ')}
+                  </span>
+                </h2>
 
-              {(!settings.content_elements || settings.content_elements.length === 0) && (
                 <p className="text-lg text-muted-foreground font-content">
                   {t('about_settings.intro_text', settings.intro_text)}
                 </p>
-              )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Grid Content Section - Full Width */}
         {settings.content_elements && settings.content_elements.length > 0 ? (

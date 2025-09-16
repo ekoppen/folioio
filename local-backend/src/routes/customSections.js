@@ -8,13 +8,13 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const result = await query(`
-      SELECT 
-        id, name, slug, title, is_active, show_in_navigation, 
-        show_hero_button, menu_order, header_image_url, 
-        content_left, content_right, button_text, button_link,
-        created_at, updated_at
-      FROM public.custom_sections 
-      WHERE is_active = true 
+      SELECT
+        id, name, slug, title, is_active, show_in_navigation,
+        show_hero_button, menu_order, header_image_url,
+        content_left, content_right, content_elements, button_text, button_link, buttons,
+        background_color, created_at, updated_at
+      FROM public.custom_sections
+      WHERE is_active = true
       ORDER BY menu_order ASC, created_at ASC
     `);
 
@@ -34,12 +34,12 @@ router.get('/', async (req, res) => {
 router.get('/admin', requireAuth, requireAdmin, async (req, res) => {
   try {
     const result = await query(`
-      SELECT 
-        id, name, slug, title, is_active, show_in_navigation, 
-        show_hero_button, menu_order, header_image_url, 
-        content_left, content_right, button_text, button_link,
-        created_at, updated_at
-      FROM public.custom_sections 
+      SELECT
+        id, name, slug, title, is_active, show_in_navigation,
+        show_hero_button, menu_order, header_image_url,
+        content_left, content_right, content_elements, button_text, button_link, buttons,
+        background_color, created_at, updated_at
+      FROM public.custom_sections
       ORDER BY menu_order ASC, created_at ASC
     `);
 
@@ -59,14 +59,14 @@ router.get('/admin', requireAuth, requireAdmin, async (req, res) => {
 router.get('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const result = await query(`
-      SELECT 
-        id, name, slug, title, is_active, show_in_navigation, 
-        show_hero_button, menu_order, header_image_url, 
-        content_left, content_right, button_text, button_link,
-        created_at, updated_at
-      FROM public.custom_sections 
+      SELECT
+        id, name, slug, title, is_active, show_in_navigation,
+        show_hero_button, menu_order, header_image_url,
+        content_left, content_right, content_elements, button_text, button_link, buttons,
+        background_color, created_at, updated_at
+      FROM public.custom_sections
       WHERE id = $1
     `, [id]);
 
@@ -102,8 +102,11 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
       header_image_url,
       content_left,
       content_right = [],
+      content_elements = [],
       button_text,
-      button_link
+      button_link,
+      buttons = [],
+      background_color
     } = req.body;
 
     if (!name || !slug || !title) {
@@ -126,15 +129,17 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
 
     const result = await query(`
       INSERT INTO public.custom_sections (
-        name, slug, title, is_active, show_in_navigation, 
-        show_hero_button, menu_order, header_image_url, 
-        content_left, content_right, button_text, button_link
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        name, slug, title, is_active, show_in_navigation,
+        show_hero_button, menu_order, header_image_url,
+        content_left, content_right, content_elements, button_text, button_link, buttons,
+        background_color
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING *
     `, [
       name, slug, title, is_active, show_in_navigation,
       show_hero_button, menu_order, header_image_url,
-      content_left, JSON.stringify(content_right), button_text, button_link
+      content_left, JSON.stringify(content_right), JSON.stringify(content_elements),
+      button_text, button_link, JSON.stringify(buttons), background_color
     ]);
 
     res.status(201).json({
@@ -169,8 +174,11 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
       header_image_url,
       content_left,
       content_right,
+      content_elements,
       button_text,
-      button_link
+      button_link,
+      buttons,
+      background_color
     } = req.body;
 
     // Check if section exists
@@ -211,16 +219,21 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
         header_image_url = COALESCE($8, header_image_url),
         content_left = COALESCE($9, content_left),
         content_right = COALESCE($10, content_right),
-        button_text = COALESCE($11, button_text),
-        button_link = COALESCE($12, button_link),
+        content_elements = COALESCE($11, content_elements),
+        button_text = COALESCE($12, button_text),
+        button_link = COALESCE($13, button_link),
+        buttons = COALESCE($14, buttons),
+        background_color = COALESCE($15, background_color),
         updated_at = NOW()
-      WHERE id = $13
+      WHERE id = $16
       RETURNING *
     `, [
       name, slug, title, is_active, show_in_navigation,
       show_hero_button, menu_order, header_image_url,
       content_left, content_right ? JSON.stringify(content_right) : null,
-      button_text, button_link, id
+      content_elements ? JSON.stringify(content_elements) : null,
+      button_text, button_link, buttons ? JSON.stringify(buttons) : null,
+      background_color, id
     ]);
 
     res.json({

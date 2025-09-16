@@ -60,6 +60,11 @@ interface CustomSection {
   content_elements?: ContentElement[];  // New grid-based content
   button_text?: string;
   button_link?: string;
+  buttons?: Array<{
+    text: string;
+    link: string;
+    style?: 'primary' | 'secondary' | 'outline';
+  }>;
   background_color?: string;  // New background color field
 }
 
@@ -104,6 +109,7 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
     content_elements: [] as ContentElement[],  // Add grid elements
     button_text: '',
     button_link: '',
+    buttons: [],  // New buttons array
     background_color: undefined
   });
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -139,6 +145,7 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
         content_elements: contentElements,
         button_text: section.button_text || '',
         button_link: section.button_link || '',
+        buttons: section.buttons || [],
         background_color: section.background_color
       });
     } else {
@@ -157,6 +164,7 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
         content_elements: [],
         button_text: '',
         button_link: '',
+        buttons: [],
         background_color: undefined
       });
     }
@@ -305,6 +313,29 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
     setFormData(prev => ({
       ...prev,
       content_right: prev.content_right.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addButton = () => {
+    setFormData(prev => ({
+      ...prev,
+      buttons: [...prev.buttons, { text: 'New Button', link: '#', style: 'primary' }]
+    }));
+  };
+
+  const updateButton = (index: number, updates: Partial<typeof formData.buttons[0]>) => {
+    setFormData(prev => ({
+      ...prev,
+      buttons: prev.buttons.map((button, i) =>
+        i === index ? { ...button, ...updates } : button
+      )
+    }));
+  };
+
+  const removeButton = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      buttons: prev.buttons.filter((_, i) => i !== index)
     }));
   };
 
@@ -532,41 +563,138 @@ const CustomSectionEditor = ({ section, isOpen, onClose, onSave }: CustomSection
             </CardContent>
           </Card>
 
-          {/* Button Settings */}
+          {/* Legacy Single Button (for backward compatibility) */}
+          {formData.buttons.length === 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Button size="sm" variant="outline" className="pointer-events-none">
+                    Button
+                  </Button>
+                  Legacy Button Settings (Optional)
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Add a single call-to-action button. For more buttons, use the Multiple Buttons section below.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="button-text">Button Text</Label>
+                    <Input
+                      id="button-text"
+                      value={formData.button_text}
+                      onChange={(e) => setFormData(prev => ({ ...prev, button_text: e.target.value }))}
+                      placeholder="e.g., Meer Info"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="button-link">Button Link</Label>
+                    <Input
+                      id="button-link"
+                      value={formData.button_link}
+                      onChange={(e) => setFormData(prev => ({ ...prev, button_link: e.target.value }))}
+                      placeholder="e.g., #portfolio or https://example.com"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Use: <code>#section-id</code> for scrolling, <code>contact</code> for contact modal, or full URLs
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Multiple Buttons System */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Button size="sm" variant="outline" className="pointer-events-none">
-                  Button
+              <CardTitle className="text-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" className="pointer-events-none">
+                    Buttons
+                  </Button>
+                  Multiple Buttons
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addButton}
+                  className="flex items-center gap-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Button
                 </Button>
-                Button Settings (Optional)
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Add a call-to-action button to your section. Leave empty to hide the button.
+                Add multiple call-to-action buttons with different styles. These will be displayed at the bottom of your section.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="button-text">Button Text</Label>
-                  <Input
-                    id="button-text"
-                    value={formData.button_text}
-                    onChange={(e) => setFormData(prev => ({ ...prev, button_text: e.target.value }))}
-                    placeholder="e.g., Meer Info"
-                  />
-                </div>
+              {formData.buttons.map((button, index) => (
+                <div key={index} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary">Button {index + 1}</Badge>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeButton(index)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
 
-                <div>
-                  <Label htmlFor="button-link">Button Link</Label>
-                  <Input
-                    id="button-link"
-                    value={formData.button_link}
-                    onChange={(e) => setFormData(prev => ({ ...prev, button_link: e.target.value }))}
-                    placeholder="e.g., #portfolio or https://example.com"
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <Label>Button Text</Label>
+                      <Input
+                        value={button.text}
+                        onChange={(e) => updateButton(index, { text: e.target.value })}
+                        placeholder="e.g., Learn More"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Button Link</Label>
+                      <Input
+                        value={button.link}
+                        onChange={(e) => updateButton(index, { link: e.target.value })}
+                        placeholder="e.g., #portfolio"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Button Style</Label>
+                      <Select
+                        value={button.style || 'primary'}
+                        onValueChange={(value: 'primary' | 'secondary' | 'outline') =>
+                          updateButton(index, { style: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="primary">Primary</SelectItem>
+                          <SelectItem value="secondary">Secondary</SelectItem>
+                          <SelectItem value="outline">Outline</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
+
+              {formData.buttons.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No buttons added yet</p>
+                  <p className="text-sm">Click "Add Button" to create your first button</p>
+                </div>
+              )}
+
               <p className="text-xs text-muted-foreground">
                 Use: <code>#section-id</code> for scrolling, <code>contact</code> for contact modal, or full URLs
               </p>

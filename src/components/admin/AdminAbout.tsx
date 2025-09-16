@@ -445,6 +445,10 @@ const AdminAbout = () => {
         <Card>
           <CardHeader>
             <CardTitle>Basis Informatie</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Deze velden worden alleen getoond als je geen grid content hebt.
+              Voor meer controle over de opmaak, gebruik de Content Grid Editor hieronder.
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Profile Photo */}
