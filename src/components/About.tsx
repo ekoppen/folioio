@@ -3,7 +3,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ContactModal } from '@/components/ContactModal';
+import { ContentGridRenderer } from '@/components/ContentGridRenderer';
 import { getBackendAdapter } from '@/config/backend-config';
+import { ContentElement } from '@/types/content-grid';
 import { Palette, Camera, Laptop, Heart, Mail } from 'lucide-react';
 import { useAccentColor } from '@/hooks/useAccentColor';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -12,6 +14,7 @@ interface AboutSettings {
   main_title: string;
   intro_text: string;
   description_text: string;
+  content_elements?: ContentElement[];  // New grid-based content
   skills: string[];
   services: Array<{
     icon: string;
@@ -30,6 +33,7 @@ interface AboutSettings {
   quote_text?: string;  // Keep for backward compatibility
   quote_author?: string; // Keep for backward compatibility
   profile_photo_url?: string;
+  background_color?: string;  // New background color field
 }
 
 const iconMap: Record<string, any> = {
@@ -50,6 +54,7 @@ const About = ({ onContactClick }: AboutProps = {}) => {
     main_title: 'Over Mij',
     intro_text: 'Hallo! Ik ben een gepassioneerde creatieve professional die graag verhalen vertelt door middel van visuele kunst, fotografie en digitaal ontwerp. Met meer dan 5 jaar ervaring help ik klanten hun visie tot leven te brengen.',
     description_text: 'Mijn werk wordt gedreven door nieuwsgierigheid en de wens om betekenisvolle verbindingen te maken tussen mensen en merken. Elke project is een nieuwe kans om iets unieks te creëren.',
+    content_elements: [],  // Initialize grid content
     skills: ['Fotografie', 'Grafisch Ontwerp', 'Web Development', 'Digitale Kunst', 'UI/UX Design'],
     services: [
       {
@@ -76,7 +81,8 @@ const About = ({ onContactClick }: AboutProps = {}) => {
     quotes: [
       { text: 'Creativiteit is niet wat je ziet, maar wat je anderen laat zien.', author: 'Edgar Degas' }
     ],
-    profile_photo_url: undefined
+    profile_photo_url: undefined,
+    background_color: undefined
   });
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   
@@ -124,11 +130,13 @@ const About = ({ onContactClick }: AboutProps = {}) => {
           main_title: record.main_title,
           intro_text: record.intro_text,
           description_text: record.description_text,
+          content_elements: (record.content_elements as ContentElement[]) || [],
           skills: (record.skills as string[]) || [],
           services: (record.services as AboutSettings['services']) || [],
           stats: (record.stats as AboutSettings['stats']) || [],
           quotes: quotes,
-          profile_photo_url: record.profile_photo_url
+          profile_photo_url: record.profile_photo_url,
+          background_color: record.background_color
         });
       }
     } catch (error) {
@@ -136,74 +144,97 @@ const About = ({ onContactClick }: AboutProps = {}) => {
     }
   };
 
+  // Generate inline style for background color
+  const sectionStyle = settings.background_color && settings.background_color !== 'transparent'
+    ? { backgroundColor: settings.background_color }
+    : {};
+
+  // Determine if we should use default background class
+  const shouldUseDefaultBg = !settings.background_color || settings.background_color === 'transparent';
+
   return (
-    <section id="about" className="section-padding bg-muted/30 snap-section">
+    <section
+      id="about"
+      className={`section-padding snap-section ${shouldUseDefaultBg ? 'bg-muted/30' : ''}`}
+      style={sectionStyle}
+    >
       <div className="container mx-auto">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Left Content */}
-          <div className="animate-slide-in-left">
-            <div className="flex items-start gap-6 mb-6">
-              {settings.profile_photo_url ? (
-                <img
-                  src={settings.profile_photo_url}
-                  alt="Profielfoto"
-                  className="w-32 h-32 object-cover rounded-lg flex-shrink-0 shadow-lg"
-                  onError={(e) => console.log('Image failed to load:', e)}
-                  onLoad={() => console.log('Image loaded successfully:', settings.profile_photo_url)}
-                />
-              ) : (
-                console.log('No profile photo URL found:', settings.profile_photo_url)
-              )}
-              <div className="flex-1">
-                <h2 className="text-4xl md:text-5xl font-bold mb-4 font-title">
-                  {t('about_settings.main_title', settings.main_title).split(' ')[0]}{' '}
-                  <span style={{ color: 'hsl(var(--dynamic-accent))' }}>
-                    {t('about_settings.main_title', settings.main_title).split(' ').slice(1).join(' ')}
-                  </span>
-                </h2>
-                
-                <p className="text-lg text-muted-foreground font-content">
-                  {t('about_settings.intro_text', settings.intro_text)}
-                </p>
-              </div>
-            </div>
-            
-            <p className="text-lg text-muted-foreground mb-8 font-content">
-              {t('about_settings.description_text', settings.description_text)}
-            </p>
-
-            {/* Skills */}
-            {settings.skills.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-4 font-title">{t('about.expertise', 'Expertise')}</h3>
-                <div className="flex flex-wrap gap-2">
-                  {settings.skills.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="px-3 py-1">
-                      {t(`skills.${skill.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`, skill)}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+        {/* Header Section */}
+        <div className="animate-slide-in-left mb-12">
+          <div className="flex items-start gap-6 mb-6">
+            {settings.profile_photo_url ? (
+              <img
+                src={settings.profile_photo_url}
+                alt="Profielfoto"
+                className="w-32 h-32 object-cover rounded-lg flex-shrink-0 shadow-lg"
+                onError={(e) => console.log('Image failed to load:', e)}
+                onLoad={() => console.log('Image loaded successfully:', settings.profile_photo_url)}
+              />
+            ) : (
+              console.log('No profile photo URL found:', settings.profile_photo_url)
             )}
+            <div className="flex-1">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-title">
+                {t('about_settings.main_title', settings.main_title).split(' ')[0]}{' '}
+                <span style={{ color: 'hsl(var(--dynamic-accent))' }}>
+                  {t('about_settings.main_title', settings.main_title).split(' ').slice(1).join(' ')}
+                </span>
+              </h2>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-6">
-              {settings.stats.filter(stat => stat.number && stat.label).map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-2xl font-bold mb-1" style={{ color: 'hsl(var(--dynamic-accent))' }}>
-                    {stat.number}
-                  </div>
-                   <div className="text-sm text-muted-foreground">
-                     {t(`stats.${stat.label.toLowerCase().replace(/\s+/g, '_')}`, stat.label)}
-                   </div>
-                </div>
-              ))}
+              <p className="text-lg text-muted-foreground font-content">
+                {t('about_settings.intro_text', settings.intro_text)}
+              </p>
             </div>
           </div>
+        </div>
 
-          {/* Right Content - Services */}
-          <div className="animate-slide-in-right">
-            <div className="space-y-6">
+        {/* Grid Content Section - Full Width */}
+        {settings.content_elements && settings.content_elements.length > 0 ? (
+          <div className="animate-slide-in-up mb-12">
+            <ContentGridRenderer elements={settings.content_elements} />
+          </div>
+        ) : (
+          <div className="animate-slide-in-up mb-12">
+            <p className="text-lg text-muted-foreground font-content max-w-4xl mx-auto text-center">
+              {t('about_settings.description_text', settings.description_text)}
+            </p>
+          </div>
+        )}
+
+        {/* Skills and Stats Section */}
+        <div className="animate-slide-in-up mb-12">
+          {/* Skills */}
+          {settings.skills.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold mb-4 font-title text-center">{t('about.expertise', 'Expertise')}</h3>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {settings.skills.map((skill) => (
+                  <Badge key={skill} variant="secondary" className="px-3 py-1">
+                    {t(`skills.${skill.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`, skill)}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto">
+            {settings.stats.filter(stat => stat.number && stat.label).map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-2xl font-bold mb-1" style={{ color: 'hsl(var(--dynamic-accent))' }}>
+                  {stat.number}
+                </div>
+                 <div className="text-sm text-muted-foreground">
+                   {t(`stats.${stat.label.toLowerCase().replace(/\s+/g, '_')}`, stat.label)}
+                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Services Section */}
+        <div className="animate-slide-in-up">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {settings.services.map((service, index) => {
                 const IconComponent = iconMap[service.icon] || Palette;
                 const hasValidUrl = service.url && service.url.trim() !== '';
@@ -263,9 +294,10 @@ const About = ({ onContactClick }: AboutProps = {}) => {
               })}
             </div>
 
+
             {/* Quote */}
             {settings.quotes.length > 0 && (
-              <Card className="mt-8" style={{ backgroundColor: 'hsl(var(--dynamic-accent) / 0.05)', borderColor: 'hsl(var(--dynamic-accent) / 0.2)' }}>
+              <Card className="max-w-2xl mx-auto" style={{ backgroundColor: 'hsl(var(--dynamic-accent) / 0.05)', borderColor: 'hsl(var(--dynamic-accent) / 0.2)' }}>
                 <CardContent className="p-6 text-center">
                   <Heart className="w-8 h-8 mx-auto mb-4" style={{ color: 'hsl(var(--dynamic-accent))' }} />
                   <div className="min-h-[80px]">
@@ -313,7 +345,6 @@ const About = ({ onContactClick }: AboutProps = {}) => {
                 {t('about.contact_button', 'Neem Contact Op')}
               </Button>
             </div>
-          </div>
         </div>
       </div>
       

@@ -29,12 +29,6 @@ interface SiteSettings {
   content_font_url?: string;
   custom_font_family?: string;
   custom_font_url?: string;
-  contact_email?: string;
-  contact_phone?: string;
-  contact_address?: string;
-  social_instagram?: string;
-  social_facebook?: string;
-  social_linkedin?: string;
   // Header/Navigation settings
   show_site_title?: boolean;
   header_transparent?: boolean;
@@ -100,12 +94,6 @@ export const AdminSettings = () => {
     primary_color: '#2D3748',
     secondary_color: '#F7FAFC',
     accent_color: '#F6D55C',
-    contact_email: '',
-    contact_phone: '',
-    contact_address: '',
-    social_instagram: '',
-    social_facebook: '',
-    social_linkedin: '',
     // Header/Navigation defaults
     show_site_title: true,
     header_transparent: true,
@@ -218,8 +206,7 @@ export const AdminSettings = () => {
       // Filter settings to only include columns that exist in the database
       const validColumns = [
         'id', 'site_title', 'site_tagline', 'logo_url', 'primary_color', 'secondary_color', 'accent_color',
-        'custom_font_family', 'custom_font_url', 'contact_email', 'contact_phone', 'contact_address',
-        'social_instagram', 'social_facebook', 'social_linkedin', 'title_font_family', 'title_font_url',
+        'custom_font_family', 'custom_font_url', 'title_font_family', 'title_font_url',
         'content_font_family', 'content_font_url', 'slideshow_show_arrows', 'slideshow_show_dots',
         'slideshow_interval', 'slideshow_transition', 'slideshow_info_card_enabled', 'slideshow_info_card_position',
         'slideshow_info_card_opacity', 'slideshow_info_card_radius', 'slideshow_info_card_text_size',
@@ -695,46 +682,6 @@ export const AdminSettings = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Contactinformatie</CardTitle>
-          <CardDescription>
-            Werk je contactgegevens bij
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="contact_email">Email</Label>
-              <Input
-                id="contact_email"
-                type="email"
-                value={settings.contact_email || ''}
-                onChange={(e) => setSettings({ ...settings, contact_email: e.target.value })}
-                placeholder="hallo@portfolio.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contact_phone">Telefoon</Label>
-              <Input
-                id="contact_phone"
-                value={settings.contact_phone || ''}
-                onChange={(e) => setSettings({ ...settings, contact_phone: e.target.value })}
-                placeholder="+31 6 1234 5678"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="contact_address">Adres</Label>
-            <Textarea
-              id="contact_address"
-              value={settings.contact_address || ''}
-              onChange={(e) => setSettings({ ...settings, contact_address: e.target.value })}
-              placeholder="Straatnaam 123, 1234 AB Stad"
-            />
-          </div>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>
@@ -1262,45 +1209,6 @@ export const AdminSettings = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Social Media</CardTitle>
-          <CardDescription>
-            Voeg je social media links toe
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="social_instagram">Instagram</Label>
-              <Input
-                id="social_instagram"
-                value={settings.social_instagram || ''}
-                onChange={(e) => setSettings({ ...settings, social_instagram: e.target.value })}
-                placeholder="https://instagram.com/gebruikersnaam"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="social_facebook">Facebook</Label>
-              <Input
-                id="social_facebook"
-                value={settings.social_facebook || ''}
-                onChange={(e) => setSettings({ ...settings, social_facebook: e.target.value })}
-                placeholder="https://facebook.com/gebruikersnaam"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="social_linkedin">LinkedIn</Label>
-              <Input
-                id="social_linkedin"
-                value={settings.social_linkedin || ''}
-                onChange={(e) => setSettings({ ...settings, social_linkedin: e.target.value })}
-                placeholder="https://linkedin.com/in/gebruikersnaam"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>

@@ -38,6 +38,7 @@ interface CustomSectionData {
   }>;
   button_text?: string;
   button_link?: string;
+  background_color?: string;  // New background color field
 }
 
 interface CustomSectionProps {
@@ -195,11 +196,20 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
     }
   };
 
+  // Generate inline style for background color
+  const sectionStyle = sectionData.background_color && sectionData.background_color !== 'transparent'
+    ? { backgroundColor: sectionData.background_color }
+    : {};
+
+  // Determine if we should use default background class
+  const shouldUseDefaultBg = !sectionData.background_color || sectionData.background_color === 'transparent';
+
   return (
     <>
-      <section 
+      <section
         id={`custom-${sectionData.slug}`}
-        className="section-padding bg-background snap-section min-h-screen"
+        className={`section-padding snap-section min-h-screen ${shouldUseDefaultBg ? 'bg-background' : ''}`}
+        style={sectionStyle}
       >
         <div className="container mx-auto max-w-7xl">
           {/* Header Image */}
