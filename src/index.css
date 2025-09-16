@@ -2,6 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Rich Text Content Styling */
+@layer components {
+  /* Additional rich text elements */
+  .rich-text-content blockquote {
+    border-left: 4px solid #ccc;
+    margin-left: 0;
+    padding-left: 16px;
+    font-style: italic;
+  }
+
+  .rich-text-content pre {
+    background-color: #f4f4f4;
+    padding: 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+  }
+
+  .rich-text-content img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Force table styling to work - highest priority */
+.rich-text-content table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  margin: 10px 0 !important;
+  font-family: inherit !important;
+}
+
+.rich-text-content table td,
+.rich-text-content table th {
+  border: 1px solid #ddd !important;
+  padding: 6px !important;
+  text-align: left !important;
+  vertical-align: top !important;
+  display: table-cell !important;
+}
+
+.rich-text-content table th {
+  background-color: #f2f2f2 !important;
+  font-weight: bold !important;
+}
+
+.rich-text-content table tbody tr:nth-child(even) {
+  background-color: #f9f9f9 !important;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

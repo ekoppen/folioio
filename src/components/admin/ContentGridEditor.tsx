@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import {
   Plus,
   Trash2,
@@ -69,11 +70,18 @@ export function ContentGridEditor({
   };
 
   const updateElement = (id: string, updates: Partial<ContentElement>) => {
-    onChange(
-      elements.map(el =>
-        el.id === id ? { ...el, ...updates } : el
-      )
-    );
+    const updatedElements = elements.map(el => {
+      if (el.id === id) {
+        const updated = { ...el, ...updates };
+        // Preserve existing content when only updating non-content fields
+        if (!updates.content && el.content) {
+          updated.content = { ...el.content };
+        }
+        return updated;
+      }
+      return el;
+    });
+    onChange(updatedElements);
   };
 
   const deleteElement = (id: string) => {
@@ -338,19 +346,21 @@ export function ContentGridEditor({
 
                 <div>
                   <Label htmlFor="text">Tekst</Label>
-                  <Textarea
-                    id="text"
-                    value={selectedElement.content?.text || ''}
-                    onChange={(e) => updateElement(selectedElement.id, {
-                      content: {
-                        ...selectedElement.content,
-                        text: e.target.value
-                      }
-                    })}
-                    placeholder="Voer je tekst in..."
-                    rows={4}
-                    className="mt-2"
-                  />
+                  <div className="mt-2">
+                    <RichTextEditor
+                      value={selectedElement.content?.text || ''}
+                      onChange={(value) => updateElement(selectedElement.id, {
+                        content: {
+                          ...selectedElement.content,
+                          text: value
+                        }
+                      })}
+                      placeholder="Voer je tekst in... Je kunt tabellen, opmaak, links en meer toevoegen!"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    💡 Gebruik de toolbar om tabellen in te voegen, tekst op te maken, links toe te voegen en meer!
+                  </p>
                 </div>
 
                 <div>

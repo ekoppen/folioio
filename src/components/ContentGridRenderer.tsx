@@ -69,9 +69,10 @@ export function ContentGridRenderer({ elements, className }: ContentGridRenderer
                 </h3>
               )}
               {element.content?.text && (
-                <div className="font-content whitespace-pre-wrap">
-                  {element.content.text}
-                </div>
+                <div
+                  className="font-content rich-text-content"
+                  dangerouslySetInnerHTML={{ __html: element.content.text }}
+                />
               )}
             </div>
           )}
