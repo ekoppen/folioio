@@ -181,9 +181,11 @@ const About = ({ onContactClick }: AboutProps = {}) => {
                 </span>
               </h2>
 
-              <p className="text-lg text-muted-foreground font-content">
-                {t('about_settings.intro_text', settings.intro_text)}
-              </p>
+              {(!settings.content_elements || settings.content_elements.length === 0) && (
+                <p className="text-lg text-muted-foreground font-content">
+                  {t('about_settings.intro_text', settings.intro_text)}
+                </p>
+              )}
             </div>
           </div>
         </div>
