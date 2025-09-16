@@ -374,7 +374,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
                   src={photo.file_url}
                   alt={photo.alt_text || photo.filename}
                   className=""
-                  objectFit={siteSettings.slideshow_object_fit as 'cover' | 'contain' | 'fill' | 'scale-down' | 'none' || 'cover'}
+                  objectFit={settings.slideshow_object_fit as 'cover' | 'contain' | 'fill' | 'scale-down' | 'none' || 'cover'}
                 />
               </div>
             );
