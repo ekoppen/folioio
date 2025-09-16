@@ -142,13 +142,13 @@ export const SlideshowElement: React.FC<SlideshowElementProps> = ({ settings }) 
             <img
               src={photo.file_url}
               alt={photo.alt_text || photo.filename}
-              className={objectFit === 'contain' ? 'select-none pointer-events-none max-w-full max-h-full' : 'w-full h-full'}
+              className={objectFit === 'contain' ? 'block' : 'w-full h-full'}
               style={objectFit === 'contain' ? {
-                objectFit: 'contain',
+                maxWidth: '100%',
+                maxHeight: '100%',
                 width: 'auto',
                 height: 'auto',
-                maxWidth: '100%',
-                maxHeight: '100%'
+                objectFit: 'none' // Explicitly disable object-fit for contain mode
               } : { objectFit: objectFit }}
             />
           </div>

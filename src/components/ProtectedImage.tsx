@@ -24,18 +24,18 @@ const ProtectedImage: React.FC<ProtectedImageProps> = ({ src, alt, className = '
 
   if (isContainMode) {
     return (
-      <div className={`${className} relative w-full h-full flex items-center justify-center bg-black/10`}>
+      <div className={`${className} relative w-full h-full flex items-center justify-center bg-gray-900/20`}>
         <img
           src={src}
           alt={alt}
-          className="select-none pointer-events-none max-w-full max-h-full"
+          className="block"
           style={{
             ...style,
-            objectFit: 'contain',
-            width: 'auto',
-            height: 'auto',
             maxWidth: '100%',
             maxHeight: '100%',
+            width: 'auto',
+            height: 'auto',
+            objectFit: 'none', // Explicitly disable object-fit
             userSelect: 'none',
             WebkitUserSelect: 'none',
             MozUserSelect: 'none',
