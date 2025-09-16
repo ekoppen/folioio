@@ -33,7 +33,7 @@ const Admin = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.substring(1); // Remove '#'
-      const validTabs = ['settings', 'albums', 'editor', 'about', 'contact', 'custom', 'seo', 'users', 'account', 'footer'];
+      const validTabs = ['settings', 'albums', /* 'editor', */ 'about', 'contact', 'custom', 'seo', 'users', 'account', 'footer'];
 
       if (hash && validTabs.includes(hash)) {
         setActiveTab(hash);
@@ -105,7 +105,7 @@ const Admin = () => {
 
       <div className="container mx-auto p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-11 lg:w-fit lg:grid-cols-11">
+          <TabsList className="grid w-full grid-cols-10 lg:w-fit lg:grid-cols-10">
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
               Branding
@@ -114,10 +114,12 @@ const Admin = () => {
               <Folder className="w-4 h-4" />
               Albums
             </TabsTrigger>
+            {/* DISABLED: Editor tab - Page builder functionality not yet ready
             <TabsTrigger value="editor" className="flex items-center gap-2">
               <Edit className="w-4 h-4" />
               Editor
             </TabsTrigger>
+            */}
             <TabsTrigger value="about" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               Over Mij
@@ -159,11 +161,13 @@ const Admin = () => {
           <TabsContent value="albums">
             <AdminAlbums />
           </TabsContent>
-          
+
+          {/* DISABLED: Editor content - Page builder functionality not yet ready
           <TabsContent value="editor">
             <PageManager />
           </TabsContent>
-          
+          */}
+
           <TabsContent value="about">
             <AdminAbout />
           </TabsContent>

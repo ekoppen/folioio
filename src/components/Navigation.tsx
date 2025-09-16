@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAccentColor } from '@/hooks/useAccentColor';
 import { useImageBrightness } from '@/hooks/useImageBrightness';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useNavigationOverlap } from '@/hooks/useNavigationOverlap';
 import { User, LogIn, LogOut, Settings, ChevronDown, Menu, X, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ContactModal } from '@/components/ContactModal';
@@ -71,7 +72,8 @@ const Navigation = () => {
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const isBackgroundLight = useImageBrightness();
-  
+  const { isOverlapping, logoRef, navigationRef } = useNavigationOverlap();
+
   useAccentColor(); // Initialize dynamic accent color
 
   useEffect(() => {
@@ -249,7 +251,7 @@ const Navigation = () => {
       <nav className="container mx-auto px-6 py-4 relative">
         <div className={`flex items-center h-6 ${siteSettings.logo_position === 'center' ? 'justify-center' : siteSettings.logo_position === 'right' ? 'justify-end' : 'justify-between'}`} style={{ height: '24px' }}>
           {siteSettings.logo_position !== 'center' && siteSettings.logo_position !== 'right' && (
-            <div className="flex items-center gap-4">
+            <div ref={logoRef} className="flex items-center gap-4">
               {siteSettings.logo_url && (
                 <img 
                   src={siteSettings.logo_url} 
@@ -305,7 +307,7 @@ const Navigation = () => {
           )}
 
           {siteSettings.logo_position === 'center' && (
-            <div className="flex items-center gap-4">
+            <div ref={logoRef} className="flex items-center gap-4">
               {siteSettings.logo_url && (
                 <img 
                   src={siteSettings.logo_url} 
@@ -361,7 +363,7 @@ const Navigation = () => {
             </div>
           )}
 
-          <div className="hidden md:flex items-center justify-center space-x-6 lg:space-x-8 absolute left-1/2 transform -translate-x-1/2 z-10">
+          <div ref={navigationRef} className={`${isOverlapping ? 'hidden' : 'hidden md:flex'} items-center justify-center space-x-6 lg:space-x-8 absolute left-1/2 transform -translate-x-1/2 z-10`}>
             <button
               onClick={() => scrollToSection('hero')}
               className="text-white/90 hover:text-white transition-colors"
@@ -441,7 +443,7 @@ const Navigation = () => {
           </div>
 
           {siteSettings.logo_position === 'right' && (
-            <div className="flex items-center gap-4">
+            <div ref={logoRef} className="flex items-center gap-4">
               {siteSettings.logo_url && (
                 <img 
                   src={siteSettings.logo_url} 
@@ -524,7 +526,7 @@ const Navigation = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="md:hidden text-white"
+            className={`${isOverlapping ? 'block' : 'md:hidden'} text-white`}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
