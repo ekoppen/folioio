@@ -8,12 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, Palette, Camera, Laptop, Heart, Monitor, Smartphone, User, Save, Upload, X } from 'lucide-react';
 import { getBackendAdapter } from '@/config/backend-config';
 import { useToast } from '@/hooks/use-toast';
+import { ContentGridEditor } from './ContentGridEditor';
+import { ContentElement, createEmptyTextElement } from '@/types/content-grid';
 
 interface AboutSettings {
   id: string;
   main_title: string;
   intro_text: string;
   description_text: string;
+  content_elements?: ContentElement[];  // New grid-based content
   skills: string[];
   services: Array<{
     icon: string;
@@ -50,6 +53,7 @@ const AdminAbout = () => {
     main_title: 'Over Mij',
     intro_text: 'Hallo! Ik ben een gepassioneerde creatieve professional die graag verhalen vertelt door middel van visuele kunst, fotografie en digitaal ontwerp.',
     description_text: 'Mijn werk wordt gedreven door nieuwsgierigheid en de wens om betekenisvolle verbindingen te maken tussen mensen en merken.',
+    content_elements: [],  // Initialize empty grid content
     skills: ['Fotografie', 'Grafisch Ontwerp', 'Web Development'],
     services: [
       {
@@ -97,11 +101,42 @@ const AdminAbout = () => {
           quotes = [{ text: data.quote_text, author: data.quote_author || '' }];
         }
 
+        // Handle backward compatibility: convert old text fields to grid elements if needed
+        let contentElements = (data.content_elements as ContentElement[]) || [];
+        if (contentElements.length === 0 && (data.intro_text || data.description_text)) {
+          // Create grid elements from legacy text fields
+          if (data.intro_text) {
+            const introElement = createEmptyTextElement();
+            introElement.content = {
+              text: data.intro_text,
+              alignment: 'left',
+              fontSize: 'normal',
+              fontWeight: 'normal'
+            };
+            introElement.columnSpan = 'full';
+            introElement.order = 0;
+            contentElements.push(introElement);
+          }
+          if (data.description_text) {
+            const descElement = createEmptyTextElement();
+            descElement.content = {
+              text: data.description_text,
+              alignment: 'left',
+              fontSize: 'normal',
+              fontWeight: 'normal'
+            };
+            descElement.columnSpan = 'full';
+            descElement.order = 1;
+            contentElements.push(descElement);
+          }
+        }
+
         setSettings({
           id: data.id,
           main_title: data.main_title,
           intro_text: data.intro_text,
           description_text: data.description_text,
+          content_elements: contentElements,
           skills: (data.skills as string[]) || [],
           services: (data.services as AboutSettings['services']) || [],
           stats: (data.stats as AboutSettings['stats']) || [],
@@ -127,6 +162,7 @@ const AdminAbout = () => {
         main_title: settings.main_title,
         intro_text: settings.intro_text,
         description_text: settings.description_text,
+        content_elements: settings.content_elements || [],  // Save grid content
         skills: settings.skills,
         services: settings.services,
         stats: settings.stats,
@@ -329,6 +365,47 @@ const AdminAbout = () => {
     }));
   };
 
+  const handleImageUploadForGrid = async (file: File, elementId: string): Promise<string> => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Ongeldig bestand",
+        description: "Selecteer een geldige afbeelding.",
+        variant: "destructive",
+      });
+      throw new Error("Invalid file type");
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Bestand te groot",
+        description: "Selecteer een afbeelding kleiner dan 5MB.",
+        variant: "destructive",
+      });
+      throw new Error("File too large");
+    }
+
+    // Create unique filename
+    const fileExt = file.name.split('.').pop();
+    const fileName = `grid-image-${Date.now()}-${elementId}.${fileExt}`;
+
+    // Upload to backend storage
+    const backend = getBackendAdapter();
+    const { data, error } = await backend.storage
+      .from('gallery-images')
+      .upload(fileName, file);
+
+    if (error) throw error;
+
+    // Get public URL
+    const { data: { publicUrl } } = backend.storage
+      .from('gallery-images')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -428,24 +505,53 @@ const AdminAbout = () => {
                 placeholder="Over Mij"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Intro Tekst</label>
-              <Textarea
-                value={settings.intro_text}
-                onChange={(e) => setSettings(prev => ({ ...prev, intro_text: e.target.value }))}
-                rows={4}
-                placeholder="Vertel kort over jezelf..."
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Beschrijving</label>
-              <Textarea
-                value={settings.description_text}
-                onChange={(e) => setSettings(prev => ({ ...prev, description_text: e.target.value }))}
-                rows={4}
-                placeholder="Uitgebreidere beschrijving..."
-              />
-            </div>
+          </CardContent>
+        </Card>
+
+        {/* Grid Content Editor */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Content Sectie</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Voeg tekstblokken en afbeeldingen toe in een flexibel grid systeem.
+              Elementen kunnen de hele breedte of halve breedte innemen.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ContentGridEditor
+              elements={settings.content_elements || []}
+              onChange={(elements) => setSettings(prev => ({ ...prev, content_elements: elements }))}
+              onImageUpload={handleImageUploadForGrid}
+            />
+
+            {/* Legacy fields (hidden when grid content is present) */}
+            {(!settings.content_elements || settings.content_elements.length === 0) && (
+              <div className="mt-6 p-4 border rounded-lg bg-muted/50">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Legacy tekstvelden (worden automatisch geconverteerd naar grid elementen bij eerste gebruik):
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Intro Tekst (Legacy)</label>
+                    <Textarea
+                      value={settings.intro_text}
+                      onChange={(e) => setSettings(prev => ({ ...prev, intro_text: e.target.value }))}
+                      rows={4}
+                      placeholder="Vertel kort over jezelf..."
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Beschrijving (Legacy)</label>
+                    <Textarea
+                      value={settings.description_text}
+                      onChange={(e) => setSettings(prev => ({ ...prev, description_text: e.target.value }))}
+                      rows={4}
+                      placeholder="Uitgebreidere beschrijving..."
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
