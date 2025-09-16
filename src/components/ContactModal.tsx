@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Mail, Send } from 'lucide-react';
 import { getBackendAdapter } from '@/config/backend-config';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -24,11 +24,6 @@ interface ContactForm {
 
 export const ContactModal = ({ open, onOpenChange }: ContactModalProps) => {
   const { t } = useTranslation();
-  const [contactSettings, setContactSettings] = useState({
-    contact_email: 'contact@example.com',
-    contact_phone: '+31 6 1234 5678',
-    contact_address: 'Nederland'
-  });
   const [formData, setFormData] = useState<ContactForm>({
     name: '',
     email: '',
@@ -39,31 +34,6 @@ export const ContactModal = ({ open, onOpenChange }: ContactModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const loadContactSettings = async () => {
-      try {
-        const backend = getBackendAdapter();
-        const { data } = await backend
-          .from('site_settings')
-          .select('contact_email, contact_phone, contact_address')
-          .order('updated_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        
-        if (data) {
-          setContactSettings({
-            contact_email: data.contact_email || 'contact@example.com',
-            contact_phone: data.contact_phone || '+31 6 1234 5678',
-            contact_address: data.contact_address || 'Nederland'
-          });
-        }
-      } catch (error) {
-        console.error('Error loading contact settings:', error);
-      }
-    };
-    
-    loadContactSettings();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -244,22 +214,6 @@ export const ContactModal = ({ open, onOpenChange }: ContactModalProps) => {
           </div>
         </form>
 
-        <div className="border-t pt-6 mt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Mail className="w-4 h-4" style={{ color: 'hsl(var(--dynamic-accent))' }} />
-              <span className="font-content">{contactSettings.contact_email}</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Phone className="w-4 h-4" style={{ color: 'hsl(var(--dynamic-accent))' }} />
-              <span className="font-content">{contactSettings.contact_phone}</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <MapPin className="w-4 h-4" style={{ color: 'hsl(var(--dynamic-accent))' }} />
-              <span className="font-content">{contactSettings.contact_address}</span>
-            </div>
-          </div>
-        </div>
       </DialogContent>
     </Dialog>
   );
