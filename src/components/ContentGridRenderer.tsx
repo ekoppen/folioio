@@ -22,7 +22,7 @@ export function ContentGridRenderer({ elements, className }: ContentGridRenderer
           key={element.id}
           className={cn(
             "flex flex-col",
-            element.columnSpan === 'full' ? 'col-span-2' : 'col-span-1'
+            element.columnSpan === 'full' ? 'xl:col-span-2' : 'col-span-1'
           )}
           style={{
             padding: element.styling?.padding
