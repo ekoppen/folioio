@@ -9,6 +9,8 @@ interface ProtectedImageProps {
 }
 
 const ProtectedImage: React.FC<ProtectedImageProps> = ({ src, alt, className = '', style = {}, objectFit = 'cover' }) => {
+  console.log('ProtectedImage - objectFit prop:', objectFit);
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     return false;
@@ -19,44 +21,18 @@ const ProtectedImage: React.FC<ProtectedImageProps> = ({ src, alt, className = '
     return false;
   };
 
-  // For contain mode, use a completely different approach
-  const isContainMode = objectFit === 'contain';
+  const imageStyle = {
+    ...style,
+    objectFit: objectFit,
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+    MozUserSelect: 'none',
+    msUserSelect: 'none',
+    WebkitTouchCallout: 'none',
+    KhtmlUserSelect: 'none'
+  };
 
-  if (isContainMode) {
-    return (
-      <div className={`${className} relative w-full h-full flex items-center justify-center bg-gray-900/20`}>
-        <img
-          src={src}
-          alt={alt}
-          className="block"
-          style={{
-            ...style,
-            maxWidth: '100%',
-            maxHeight: '100%',
-            width: 'auto',
-            height: 'auto',
-            objectFit: 'none', // Explicitly disable object-fit
-            userSelect: 'none',
-            WebkitUserSelect: 'none',
-            MozUserSelect: 'none',
-            msUserSelect: 'none',
-            WebkitTouchCallout: 'none',
-            KhtmlUserSelect: 'none'
-          }}
-          onContextMenu={handleContextMenu}
-          onDragStart={handleDragStart}
-          draggable={false}
-        />
-        {/* Invisible overlay to prevent right-click */}
-        <div
-          className="absolute inset-0 z-10 pointer-events-auto"
-          onContextMenu={handleContextMenu}
-          onDragStart={handleDragStart}
-          style={{ userSelect: 'none' }}
-        />
-      </div>
-    );
-  }
+  console.log('ProtectedImage - Final style object:', imageStyle);
 
   return (
     <div className={`${className} relative w-full h-full`}>
@@ -64,16 +40,7 @@ const ProtectedImage: React.FC<ProtectedImageProps> = ({ src, alt, className = '
         src={src}
         alt={alt}
         className="w-full h-full select-none pointer-events-none"
-        style={{
-          ...style,
-          objectFit: objectFit,
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          MozUserSelect: 'none',
-          msUserSelect: 'none',
-          WebkitTouchCallout: 'none',
-          KhtmlUserSelect: 'none'
-        }}
+        style={imageStyle as React.CSSProperties}
         onContextMenu={handleContextMenu}
         onDragStart={handleDragStart}
         draggable={false}

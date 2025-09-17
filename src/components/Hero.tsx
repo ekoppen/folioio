@@ -254,7 +254,7 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
       console.log('Hero: Backend adapter:', backend);
       const { data, error } = await backend
         .from('site_settings')
-        .select('site_title, site_tagline, home_show_title_overlay, home_show_buttons, accent_color, footer_background_color, logo_margin_left, content_font_family, title_font_family, title_visible, title_font_size, title_color, title_position, tagline_visible, tagline_font_family, tagline_font_size, tagline_color, tagline_position, slideshow_interval, slideshow_transition, slideshow_info_card_enabled, slideshow_info_card_radius, slideshow_info_card_opacity, slideshow_info_card_position, slideshow_info_card_text_size, slideshow_show_arrows, slideshow_show_dots')
+        .select('site_title, site_tagline, home_show_title_overlay, home_show_buttons, accent_color, footer_background_color, logo_margin_left, content_font_family, title_font_family, title_visible, title_font_size, title_color, title_position, tagline_visible, tagline_font_family, tagline_font_size, tagline_color, tagline_position, slideshow_interval, slideshow_transition, slideshow_info_card_enabled, slideshow_info_card_radius, slideshow_info_card_opacity, slideshow_info_card_position, slideshow_info_card_text_size, slideshow_show_arrows, slideshow_show_dots, slideshow_object_fit')
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -272,7 +272,8 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
           slideshow_transition: data.slideshow_transition,
           slideshow_interval: data.slideshow_interval,
           slideshow_show_arrows: data.slideshow_show_arrows,
-          slideshow_show_dots: data.slideshow_show_dots
+          slideshow_show_dots: data.slideshow_show_dots,
+          slideshow_object_fit: data.slideshow_object_fit
         });
         
         setSettings({
@@ -302,7 +303,8 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
           slideshow_info_card_position: data.slideshow_info_card_position || 'bottom-left',
           slideshow_info_card_text_size: data.slideshow_info_card_text_size || 14,
           slideshow_show_arrows: data.slideshow_show_arrows,
-          slideshow_show_dots: data.slideshow_show_dots
+          slideshow_show_dots: data.slideshow_show_dots,
+          slideshow_object_fit: data.slideshow_object_fit || 'contain'
         });
       }
     } catch (error) {
@@ -374,7 +376,11 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
                   src={photo.file_url}
                   alt={photo.alt_text || photo.filename}
                   className=""
-                  objectFit={settings.slideshow_object_fit as 'cover' | 'contain' | 'fill' | 'scale-down' | 'none' || 'cover'}
+                  objectFit={(()=> {
+                    const fit = settings.slideshow_object_fit as 'cover' | 'contain' | 'fill' | 'scale-down' | 'none' || 'cover';
+                    console.log('Hero passing objectFit to ProtectedImage:', fit, 'from settings:', settings.slideshow_object_fit);
+                    return fit;
+                  })()}
                 />
               </div>
             );

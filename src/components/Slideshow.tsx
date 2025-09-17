@@ -15,10 +15,33 @@ const Slideshow = () => {
   const [slides, setSlides] = useState<SlideItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [objectFit, setObjectFit] = useState<string>('contain');
 
   useEffect(() => {
     fetchSlides();
+    fetchSettings();
   }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const backend = getBackendAdapter();
+      const { data: settings, error } = await backend
+        .from('site_settings')
+        .select('slideshow_object_fit')
+        .single();
+
+      if (error) throw error;
+
+      // Default to 'contain' to show full image, or use the setting if available
+      const fitMode = settings?.slideshow_object_fit || 'contain';
+      console.log('Slideshow object-fit setting:', fitMode);
+      setObjectFit(fitMode);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      // Default to 'contain' if settings fetch fails
+      setObjectFit('contain');
+    }
+  };
 
   const fetchSlides = async () => {
     try {
@@ -30,7 +53,7 @@ const Slideshow = () => {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      
+
       setSlides(data || []);
     } catch (error) {
       console.error('Error fetching slides:', error);
@@ -86,7 +109,8 @@ const Slideshow = () => {
             <img
               src={slide.image_url}
               alt={slide.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full"
+              style={{ objectFit: objectFit as any }}
             />
             <div className="absolute inset-0 bg-black/40" />
           </div>
