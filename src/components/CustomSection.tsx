@@ -276,7 +276,7 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
             </div>
           ) : (
             /* Legacy Two-column content */
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 xl:gap-8 lg:gap-12 items-start">
               {/* Left Column - Text Content */}
               <div className="space-y-6">
                 <div className="prose prose-lg max-w-none dark:prose-invert">
@@ -297,7 +297,7 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
               <div className="space-y-6">
                 {/* Stats - displayed in a grid */}
                 {sectionData.content_right.filter(item => item.type === 'stat').length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6 mb-8">
                     {sectionData.content_right
                       .filter(item => item.type === 'stat')
                       .map((item, index) => renderContentRightItem(item, index))}
@@ -306,7 +306,7 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
 
                 {/* Services - displayed as cards */}
                 {sectionData.content_right.filter(item => item.type === 'service').length > 0 && (
-                  <div className="grid grid-cols-1 gap-4 mb-8">
+                  <div className="grid grid-cols-1 gap-4 mb-6 xl:mb-8">
                     {sectionData.content_right
                       .filter(item => item.type === 'service')
                       .map((item, index) => renderContentRightItem(item, index))}

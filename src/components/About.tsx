@@ -162,12 +162,12 @@ const About = ({ onContactClick }: AboutProps = {}) => {
         {/* Legacy Header Section - only show if no grid content */}
         {(!settings.content_elements || settings.content_elements.length === 0) && (
           <div className="animate-slide-in-left mb-12">
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-6">
+            <div className="flex flex-col xl:flex-row items-center xl:items-start gap-6 mb-6">
               {settings.profile_photo_url ? (
                 <img
                   src={settings.profile_photo_url}
                   alt="Profielfoto"
-                  className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg flex-shrink-0 shadow-lg"
+                  className="w-24 h-24 xl:w-32 xl:h-32 object-cover rounded-lg flex-shrink-0 shadow-lg"
                   onError={(e) => console.log('Image failed to load:', e)}
                   onLoad={() => console.log('Image loaded successfully:', settings.profile_photo_url)}
                 />
@@ -220,7 +220,7 @@ const About = ({ onContactClick }: AboutProps = {}) => {
           )}
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-2xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 max-w-2xl mx-auto">
             {settings.stats.filter(stat => stat.number && stat.label).map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-2xl font-bold mb-1" style={{ color: 'hsl(var(--dynamic-accent))' }}>
@@ -236,7 +236,7 @@ const About = ({ onContactClick }: AboutProps = {}) => {
 
         {/* Services Section */}
         <div className="animate-slide-in-up">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-8">
               {settings.services.map((service, index) => {
                 const IconComponent = iconMap[service.icon] || Palette;
                 const hasValidUrl = service.url && service.url.trim() !== '';

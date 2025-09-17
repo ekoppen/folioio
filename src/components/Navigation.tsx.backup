@@ -58,7 +58,6 @@ const Navigation = () => {
   const [pages, setPages] = useState<NavigationPage[]>([]);
   const [customSections, setCustomSections] = useState<any[]>([]);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [accentColor, setAccentColor] = useState<string>('#3b82f6');
   const [siteSettings, setSiteSettings] = useState<SiteSettings>({
     site_title: 'Portfolio',
     show_site_title: true,
@@ -77,80 +76,28 @@ const Navigation = () => {
 
   useAccentColor(); // Initialize dynamic accent color
 
-  // Get the computed accent color
-  useEffect(() => {
-    const getAccentColor = () => {
-      // Try to get the CSS custom property value
-      const computedStyle = getComputedStyle(document.documentElement);
-      const accentValue = computedStyle.getPropertyValue('--dynamic-accent');
-
-      if (accentValue && accentValue.trim() !== '') {
-        // Convert HSL to a usable color format
-        setAccentColor(`hsl(${accentValue})`);
-      } else {
-        // Fallback to blue
-        setAccentColor('#3b82f6');
-      }
-    };
-
-    // Get initial color
-    getAccentColor();
-
-    // Set up observer for changes (in case accent color changes)
-    const observer = new MutationObserver(getAccentColor);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['style', 'class']
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
-      // Store current scroll position
-      const scrollY = window.scrollY;
-
-      // Lock body scroll
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = '0';
-      document.body.style.right = '0';
-      document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
-
-      // Store scroll position for restoration
-      document.body.setAttribute('data-scroll-y', scrollY.toString());
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${window.scrollY}px`;
+      document.body.style.width = '100%';
     } else {
-      // Get stored scroll position
-      const scrollY = parseInt(document.body.getAttribute('data-scroll-y') || '0');
-
-      // Restore body styles
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
       document.body.style.width = '';
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-      document.body.removeAttribute('data-scroll-y');
-
-      // Restore scroll position
-      window.scrollTo(0, scrollY);
+      window.scrollTo(0, parseInt(scrollY || '0') * -1);
     }
 
     // Cleanup on unmount
     return () => {
+      document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
       document.body.style.width = '';
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-      document.body.removeAttribute('data-scroll-y');
     };
   }, [isMobileMenuOpen]);
 
@@ -319,10 +266,8 @@ const Navigation = () => {
     navigate('/');
   };
 
-
   return (
-    <>
-    <header className={`fixed top-0 left-0 right-0 ${isMobileMenuOpen ? 'z-[10]' : 'z-[99998]'} transition-all duration-300 ${
+    <header className={`fixed top-0 left-0 right-0 z-[99998] transition-all duration-300 ${
       siteSettings.header_transparent && (isScrolled || isBackgroundLight)
         ? `bg-black/${Math.round(siteSettings.header_background_opacity * 100)} ${siteSettings.header_blur ? 'backdrop-blur-md' : ''}` 
         : siteSettings.header_transparent 
@@ -579,7 +524,7 @@ const Navigation = () => {
             </div>
           )}
 
-          <div className="hidden xl:flex items-center space-x-4 absolute right-4 top-1/2 transform -translate-y-1/2 z-20">
+          <div className="hidden md:flex items-center space-x-4 absolute right-4 top-1/2 transform -translate-y-1/2 z-20">
             {/* <LanguageSwitcher /> */}
             {user ? (
               <>
@@ -603,84 +548,210 @@ const Navigation = () => {
             )}
           </div>
 
-          <div className="xl:hidden absolute right-4 top-1/2 transform -translate-y-1/2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`transition-opacity duration-200 ${isOverlapping ? 'opacity-100' : 'opacity-100 xl:opacity-0 xl:pointer-events-none'} text-white`}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </Button>
         </div>
 
-      </nav>
+        {isMobileMenuOpen && (
+          <div
+            className="xl:hidden fixed z-[99999]"
+            style={{
+              top: '0',
+              left: '0',
+              right: '0',
+              bottom: '0',
+              width: '100vw',
+              height: '100vh',
+              backgroundColor: '#3b82f6',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              position: 'fixed'
+            }}
+          >
+            {/* Close button at the top */}
+            <div className="flex justify-end p-4">
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-white hover:text-white/80 transition-colors p-2"
+                aria-label="Sluit menu"
+              >
+                <X className="w-8 h-8" />
+              </button>
+            </div>
 
+            <div className="px-6 py-4 space-y-6">
+              <button
+                onClick={() => {
+                  scrollToSection('hero');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
+              >
+                {t('nav.home', 'Home')}
+              </button>
+
+              <button
+                onClick={() => {
+                  scrollToSection('portfolio');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
+              >
+                {t('nav.portfolio', 'Portfolio')}
+              </button>
+
+              <button
+                onClick={() => {
+                  scrollToSection('about');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
+              >
+                {t('nav.about', 'Over Mij')}
+              </button>
+
+              {/* Custom sections in mobile navigation */}
+              {customSections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => {
+                    scrollToSection(`custom-${section.slug}`);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
+                >
+                  {section.title}
+                </button>
+              ))}
+
+              {pages.map((page) => (
+                <div key={page.id}>
+                  {page.children && page.children.length > 0 ? (
+                    <div className="py-2">
+                      <div className="text-white/70 font-medium mb-2">{page.name}</div>
+                      {page.children.map((child) => (
+                        <Link
+                          key={child.id}
+                          to={`/${child.slug}`}
+                          className="block text-white/90 hover:text-white transition-colors py-1 pl-4"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          {child.name}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <Link
+                      to={`/${page.slug}`}
+                      className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {page.name}
+                    </Link>
+                  )}
+                </div>
+              ))}
+              
+              <button
+                onClick={() => {
+                  setIsContactModalOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-2 text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
+              >
+                <Mail className="w-4 h-4" />
+                {t('nav.contact', 'Contact')}
+              </button>
+              
+              <div className="border-t border-white/10 pt-4 mt-4 space-y-2">
+                {/* <div className="pb-2">
+                  <LanguageSwitcher />
+                </div> */}
+                {user ? (
+                  <>
+                    {isAdmin && (
+                      <Link 
+                        to="/admin"
+                        className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Settings className="w-4 h-4 mr-2 inline" />
+                        {t('nav.admin', 'Admin Dashboard')}
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => {
+                        handleSignOut();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex items-center w-full text-left text-white hover:text-white/80 transition-colors py-3 px-4 text-lg font-medium bg-white/10 rounded-lg"
+                    >
+                      <LogOut className="w-4 h-4 mr-2 inline" />
+                      {t('nav.logout', 'Logout')}
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to="/auth"
+                    className="flex items-center justify-center w-8 h-8 text-white/90 hover:text-white transition-colors rounded"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <LogIn className="w-4 h-4" />
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </nav>
+      
       <ContactModal
         open={isContactModalOpen}
         onOpenChange={setIsContactModalOpen}
       />
     </header>
 
-    {/* Mobile Menu - Outside header to avoid CSS conflicts */}
+    {/* Mobile Menu - Outside header for proper overlay */}
     {isMobileMenuOpen && (
       <div
+        className="xl:hidden fixed z-[99999]"
         style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          top: '0',
+          left: '0',
+          right: '0',
+          bottom: '0',
           width: '100vw',
           height: '100vh',
-          backgroundColor: accentColor,
-          opacity: 0.95,
-          zIndex: 999999,
-          display: 'flex',
-          flexDirection: 'column'
+          backgroundColor: '#3b82f6',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          position: 'fixed'
         }}
       >
-        {/* Close button */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px' }}>
+        {/* Close button at the top */}
+        <div className="flex justify-end p-4">
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            style={{
-              color: 'white',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '8px'
-            }}
+            className="text-white hover:text-white/80 transition-colors p-2"
             aria-label="Sluit menu"
           >
-            <X style={{ width: '32px', height: '32px' }} />
+            <X className="w-8 h-8" />
           </button>
         </div>
 
-        {/* Menu content */}
-        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="px-6 py-4 space-y-6">
           <button
             onClick={() => {
               scrollToSection('hero');
               setIsMobileMenuOpen(false);
             }}
-            style={{
-              display: 'block',
-              color: 'white',
-              padding: '12px 16px',
-              width: '100%',
-              textAlign: 'left',
-              fontSize: '18px',
-              fontWeight: '500',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.2)'}
-            onMouseLeave={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+            className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
           >
             {t('nav.home', 'Home')}
           </button>
@@ -690,22 +761,7 @@ const Navigation = () => {
               scrollToSection('portfolio');
               setIsMobileMenuOpen(false);
             }}
-            style={{
-              display: 'block',
-              color: 'white',
-              padding: '12px 16px',
-              width: '100%',
-              textAlign: 'left',
-              fontSize: '18px',
-              fontWeight: '500',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.2)'}
-            onMouseLeave={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+            className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
           >
             {t('nav.portfolio', 'Portfolio')}
           </button>
@@ -715,27 +771,12 @@ const Navigation = () => {
               scrollToSection('about');
               setIsMobileMenuOpen(false);
             }}
-            style={{
-              display: 'block',
-              color: 'white',
-              padding: '12px 16px',
-              width: '100%',
-              textAlign: 'left',
-              fontSize: '18px',
-              fontWeight: '500',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.2)'}
-            onMouseLeave={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+            className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
           >
             {t('nav.about', 'Over Mij')}
           </button>
 
-          {/* Custom sections */}
+          {/* Custom sections in mobile navigation */}
           {customSections.map((section) => (
             <button
               key={section.id}
@@ -743,75 +784,38 @@ const Navigation = () => {
                 scrollToSection(`custom-${section.slug}`);
                 setIsMobileMenuOpen(false);
               }}
-              style={{
-                display: 'block',
-                color: 'white',
-                padding: '12px 16px',
-                width: '100%',
-                textAlign: 'left',
-                fontSize: '18px',
-                fontWeight: '500',
-                backgroundColor: 'rgba(255,255,255,0.1)',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.2)'}
-              onMouseLeave={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+              className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
             >
               {section.title}
             </button>
           ))}
 
-          {/* Dynamic pages */}
           {pages.map((page) => (
-            page.children && page.children.length > 0 ? (
-              <div key={page.id} style={{ marginBottom: '16px' }}>
-                <div style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '500', marginBottom: '8px' }}>
-                  {page.name}
+            <div key={page.id}>
+              {page.children && page.children.length > 0 ? (
+                <div className="py-2">
+                  <div className="text-white/70 font-medium mb-2">{page.name}</div>
+                  {page.children.map((child) => (
+                    <Link
+                      key={child.id}
+                      to={`/${child.slug}`}
+                      className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {child.name}
+                    </Link>
+                  ))}
                 </div>
-                {page.children.map((child) => (
-                  <a
-                    key={child.id}
-                    href={`/${child.slug}`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    style={{
-                      display: 'block',
-                      color: 'rgba(255,255,255,0.9)',
-                      padding: '8px 24px',
-                      textDecoration: 'none',
-                      fontSize: '16px'
-                    }}
-                  >
-                    {child.name}
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <a
-                key={page.id}
-                href={`/${page.slug}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-                style={{
-                  display: 'block',
-                  color: 'white',
-                  padding: '12px 16px',
-                  width: '100%',
-                  textAlign: 'left',
-                  fontSize: '18px',
-                  fontWeight: '500',
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
-                  textDecoration: 'none',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.2)'}
-                onMouseLeave={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-              >
-                {page.name}
-              </a>
-            )
+              ) : (
+                <Link
+                  to={`/${page.slug}`}
+                  className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {page.name}
+                </Link>
+              )}
+            </div>
           ))}
 
           <button
@@ -819,112 +823,49 @@ const Navigation = () => {
               setIsContactModalOpen(true);
               setIsMobileMenuOpen(false);
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              color: 'white',
-              padding: '12px 16px',
-              width: '100%',
-              textAlign: 'left',
-              fontSize: '18px',
-              fontWeight: '500',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.2)'}
-            onMouseLeave={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+            className="flex items-center gap-2 text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
           >
-            <Mail style={{ width: '16px', height: '16px' }} />
+            <Mail className="w-4 h-4" />
             {t('nav.contact', 'Contact')}
           </button>
 
-          {/* Admin/Auth section */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '16px', marginTop: '16px' }}>
+          <div className="border-t border-white/10 pt-4 mt-4 space-y-2">
             {user ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <>
                 {isAdmin && (
-                  <a
-                    href="/admin"
+                  <Link
+                    to="/admin"
+                    className="block text-white hover:text-white/80 transition-colors py-3 px-4 w-full text-left text-lg font-medium bg-white/10 rounded-lg"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      color: 'white',
-                      padding: '12px 16px',
-                      width: '100%',
-                      textAlign: 'left',
-                      fontSize: '18px',
-                      fontWeight: '500',
-                      backgroundColor: 'rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                      textDecoration: 'none',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.2)'}
-                    onMouseLeave={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
                   >
-                    <Settings style={{ width: '16px', height: '16px' }} />
+                    <Settings className="w-4 h-4 mr-2 inline" />
                     {t('nav.admin', 'Admin Dashboard')}
-                  </a>
+                  </Link>
                 )}
                 <button
                   onClick={() => {
                     handleSignOut();
                     setIsMobileMenuOpen(false);
                   }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    width: '100%',
-                    textAlign: 'left',
-                    color: 'white',
-                    padding: '12px 16px',
-                    fontSize: '18px',
-                    fontWeight: '500',
-                    backgroundColor: 'rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.2)'}
-                  onMouseLeave={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                  className="flex items-center w-full text-left text-white hover:text-white/80 transition-colors py-3 px-4 text-lg font-medium bg-white/10 rounded-lg"
                 >
-                  <LogOut style={{ width: '16px', height: '16px' }} />
+                  <LogOut className="w-4 h-4 mr-2 inline" />
                   {t('nav.logout', 'Logout')}
                 </button>
-              </div>
+              </>
             ) : (
-              <a
-                href="/auth"
+              <Link
+                to="/auth"
+                className="flex items-center justify-center w-8 h-8 text-white/90 hover:text-white transition-colors rounded"
                 onClick={() => setIsMobileMenuOpen(false)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '48px',
-                  height: '48px',
-                  color: 'rgba(255,255,255,0.9)',
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
-                  textDecoration: 'none'
-                }}
               >
-                <LogIn style={{ width: '20px', height: '20px' }} />
-              </a>
+                <LogIn className="w-4 h-4" />
+              </Link>
             )}
           </div>
         </div>
       </div>
     )}
-
-    </>
   );
 };
 
