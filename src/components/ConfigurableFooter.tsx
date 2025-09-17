@@ -105,7 +105,7 @@ const ConfigurableFooter = () => {
   if (elements.length === 0) {
     return (
       <footer className="bg-primary text-primary-foreground">
-        <div className="container mx-auto px-6 py-8">
+        <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="text-center">
             <p className="text-primary-foreground/80">
               © {new Date().getFullYear()} Portfolio. Alle rechten voorbehouden.
@@ -118,7 +118,7 @@ const ConfigurableFooter = () => {
 
   return (
     <footer className="bg-primary text-primary-foreground relative">
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-4 sm:px-6 py-8">
         <div className="relative">
           {elements.map((element) => (
             <EditableElement

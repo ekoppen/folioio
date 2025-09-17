@@ -329,7 +329,7 @@ const Navigation = () => {
           ? 'bg-transparent'
           : 'bg-black/90'
     }`}>
-      <nav className="container mx-auto px-6 py-4 relative">
+      <nav className="container mx-auto px-4 sm:px-6 py-4 relative">
         <div className={`flex items-center h-6 ${siteSettings.logo_position === 'center' ? 'justify-center' : siteSettings.logo_position === 'right' ? 'justify-end' : 'justify-between'}`} style={{ height: '24px' }}>
           {siteSettings.logo_position !== 'center' && siteSettings.logo_position !== 'right' && (
             <div ref={logoRef} className="flex items-center gap-4">

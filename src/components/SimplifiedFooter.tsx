@@ -151,7 +151,7 @@ const SimplifiedFooter = () => {
         e.currentTarget.style.backgroundColor = footerStyle.backgroundColor;
       }}
     >
-      <div className="container mx-auto px-6" style={{ textAlign: settings.footer_text_align }}>
+      <div className="container mx-auto px-4 sm:px-6" style={{ textAlign: settings.footer_text_align }}>
         <p className="whitespace-pre-line">{t('site_settings.footer_text', settings.footer_text)}</p>
       </div>
     </footer>
