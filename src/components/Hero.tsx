@@ -27,6 +27,7 @@ interface Album {
   show_description_in_slideshow?: boolean;
   title_display_duration?: number;
   description_display_duration?: number;
+  album_object_fit?: string | null;
 }
 
 interface SiteSettings {
@@ -377,8 +378,16 @@ const Hero = ({ selectedAlbum, onBackToHome }: HeroProps) => {
                   alt={photo.alt_text || photo.filename}
                   className=""
                   objectFit={(()=> {
-                    const fit = settings.slideshow_object_fit as 'cover' | 'contain' | 'fill' | 'scale-down' | 'none' || 'cover';
-                    console.log('Hero passing objectFit to ProtectedImage:', fit, 'from settings:', settings.slideshow_object_fit);
+                    // Use album-specific setting if available, otherwise fall back to global setting
+                    const albumFit = selectedAlbum?.album_object_fit;
+                    const globalFit = settings.slideshow_object_fit;
+                    const fit = (albumFit || globalFit || 'contain') as 'cover' | 'contain' | 'fill' | 'scale-down' | 'none';
+                    console.log('Hero objectFit decision:', {
+                      albumFit,
+                      globalFit,
+                      finalFit: fit,
+                      albumName: selectedAlbum?.name || 'home'
+                    });
                     return fit;
                   })()}
                 />

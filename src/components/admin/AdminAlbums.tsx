@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { getBackendAdapter } from '@/config/backend-config';
@@ -23,6 +24,7 @@ interface Album {
   show_description_in_slideshow?: boolean;
   title_display_duration?: number;
   description_display_duration?: number;
+  album_object_fit?: string | null;
   created_at: string;
   updated_at: string;
   photos?: Photo[];
@@ -55,7 +57,8 @@ export const AdminAlbums = () => {
     description: '',
     is_visible: true,
     show_title_in_slideshow: true,
-    show_description_in_slideshow: true
+    show_description_in_slideshow: true,
+    album_object_fit: null as string | null
   });
   const { toast } = useToast();
 
@@ -68,7 +71,7 @@ export const AdminAlbums = () => {
     try {
       const { data, error } = await backend
         .from('albums')
-        .select('*')
+        .select('*, album_object_fit')
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
@@ -140,18 +143,20 @@ export const AdminAlbums = () => {
           slug: newAlbum.slug,
           description: newAlbum.description,
           is_visible: newAlbum.is_visible,
-          sort_order: albums.length
+          sort_order: albums.length,
+          album_object_fit: newAlbum.album_object_fit
         });
 
       if (error) throw error;
 
-      setNewAlbum({ 
-        name: '', 
-        slug: '', 
-        description: '', 
+      setNewAlbum({
+        name: '',
+        slug: '',
+        description: '',
         is_visible: true,
         show_title_in_slideshow: true,
-        show_description_in_slideshow: true
+        show_description_in_slideshow: true,
+        album_object_fit: null
       });
       setShowCreateAlbum(false);
       await fetchAlbums();
@@ -196,7 +201,8 @@ export const AdminAlbums = () => {
           show_title_in_slideshow: editingAlbum.show_title_in_slideshow,
           show_description_in_slideshow: editingAlbum.show_description_in_slideshow,
           title_display_duration: editingAlbum.title_display_duration || 0,
-          description_display_duration: editingAlbum.description_display_duration || 0
+          description_display_duration: editingAlbum.description_display_duration || 0,
+          album_object_fit: editingAlbum.album_object_fit
         })
         .eq('id', editingAlbum.id);
 
@@ -832,6 +838,32 @@ export const AdminAlbums = () => {
                       </p>
                     </div>
                   )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="album_object_fit">Foto weergave</Label>
+                    <Select
+                      value={editingAlbum.album_object_fit || "default"}
+                      onValueChange={(value) => setEditingAlbum({
+                        ...editingAlbum,
+                        album_object_fit: value === "default" ? null : value
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Gebruik standaard instelling</SelectItem>
+                        <SelectItem value="contain">Geheel zichtbaar (contain)</SelectItem>
+                        <SelectItem value="cover">Vullen (cover)</SelectItem>
+                        <SelectItem value="fill">Uitrekken (fill)</SelectItem>
+                        <SelectItem value="scale-down">Verkleinen indien nodig</SelectItem>
+                        <SelectItem value="none">Originele grootte</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Overschrijft de globale slideshow foto-weergave instelling voor dit album
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

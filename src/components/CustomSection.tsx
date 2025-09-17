@@ -276,7 +276,7 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
             </div>
           ) : (
             /* Legacy Two-column content */
-            <div className="grid lg:grid-cols-2 gap-12 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
               {/* Left Column - Text Content */}
               <div className="space-y-6">
                 <div className="prose prose-lg max-w-none dark:prose-invert">
@@ -297,7 +297,7 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
               <div className="space-y-6">
                 {/* Stats - displayed in a grid */}
                 {sectionData.content_right.filter(item => item.type === 'stat').length > 0 && (
-                  <div className="grid grid-cols-3 gap-6 mb-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
                     {sectionData.content_right
                       .filter(item => item.type === 'stat')
                       .map((item, index) => renderContentRightItem(item, index))}
@@ -306,7 +306,7 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
 
                 {/* Services - displayed as cards */}
                 {sectionData.content_right.filter(item => item.type === 'service').length > 0 && (
-                  <div className="grid gap-4 mb-8">
+                  <div className="grid grid-cols-1 gap-4 mb-8">
                     {sectionData.content_right
                       .filter(item => item.type === 'service')
                       .map((item, index) => renderContentRightItem(item, index))}
@@ -336,7 +336,7 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
 
           {/* Buttons - show multiple buttons or legacy single button */}
           {(sectionData.buttons && sectionData.buttons.length > 0) ? (
-            <div className="flex flex-wrap gap-4 justify-center mt-8">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center items-center mt-8">
               {sectionData.buttons.map((button, index) => (
                 <Button
                   key={index}
@@ -372,8 +372,8 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
                   }
                   className={
                     button.style === 'primary' || !button.style
-                      ? "bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-3 text-lg"
-                      : "font-semibold px-8 py-3 text-lg"
+                      ? "bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-6 py-2 sm:px-8 sm:py-3 text-base sm:text-lg w-full sm:w-auto"
+                      : "font-semibold px-6 py-2 sm:px-8 sm:py-3 text-base sm:text-lg w-full sm:w-auto"
                   }
                 >
                   {button.text}
@@ -385,7 +385,7 @@ const CustomSection = ({ sectionData, onContactClick }: CustomSectionProps) => {
             <div className="text-center mt-8">
               <Button
                 onClick={handleButtonClick}
-                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-3 text-lg"
+                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-6 py-2 sm:px-8 sm:py-3 text-base sm:text-lg w-full sm:w-auto max-w-xs sm:max-w-none"
               >
                 {sectionData.button_text}
               </Button>
