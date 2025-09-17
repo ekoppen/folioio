@@ -220,7 +220,7 @@ const About = ({ onContactClick }: AboutProps = {}) => {
           )}
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 max-w-2xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 max-w-2xl mx-auto">
             {settings.stats.filter(stat => stat.number && stat.label).map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-2xl font-bold mb-1" style={{ color: 'hsl(var(--dynamic-accent))' }}>
@@ -236,7 +236,7 @@ const About = ({ onContactClick }: AboutProps = {}) => {
 
         {/* Services Section */}
         <div className="animate-slide-in-up">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 mb-8">
               {settings.services.map((service, index) => {
                 const IconComponent = iconMap[service.icon] || Palette;
                 const hasValidUrl = service.url && service.url.trim() !== '';

@@ -16,7 +16,7 @@ export function ContentGridRenderer({ elements, className }: ContentGridRenderer
   const sortedElements = [...elements].sort((a, b) => a.order - b.order);
 
   return (
-    <div className={cn("grid grid-cols-2 gap-4", className)}>
+    <div className={cn("grid grid-cols-1 xl:grid-cols-2 gap-4", className)}>
       {sortedElements.map((element) => (
         <div
           key={element.id}
