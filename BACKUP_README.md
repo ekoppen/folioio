@@ -262,10 +262,12 @@ STOP_CONTAINERS_DURING_BACKUP=true
 
 ### Backup locaties
 - **Lokaal**: `deployment-backups/[deployment]/[timestamp]/`
-- **Remote**: Zoals geconfigureerd in `REMOTE_BACKUP_DEST`
+- **Remote (NAS)**: `$REMOTE_BACKUP_DEST/[deployment]/[timestamp]/`
 - **Logs**: `backup-automation.log` (voor automated backups)
 
 ### Backup formaat
+
+**Lokaal**:
 ```
 deployment-backups/
 └── folioio/
@@ -277,6 +279,20 @@ deployment-backups/
         ├── .env
         ├── docker-compose.yml
         └── backup.meta      # Metadata met checksums
+```
+
+**Remote (NAS)**: Deployment naam wordt gebruikt als subdirectory
+```
+# Bij REMOTE_BACKUP_DEST="/volume1/backups/folioio"
+/volume1/backups/folioio/
+└── folioio/                      # Deployment naam
+    └── 20251003-124317/          # Timestamp
+        └── [alle backup bestanden]
+
+# Of met compressie:
+/volume1/backups/folioio/
+└── folioio/                      # Deployment naam
+    └── 20251003-124317.tar.gz    # Gecomprimeerde backup
 ```
 
 ### Handige commando's

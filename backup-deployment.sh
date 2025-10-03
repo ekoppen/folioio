@@ -436,8 +436,9 @@ EOF
                 fi
 
                 # Execute rsync
+                # Always use deployment name as subdirectory on remote
                 if [ "$COMPRESS" = true ]; then
-                    eval "$rsync_cmd \"$BACKUP_ROOT/$deployment/$TIMESTAMP.tar.gz\" \"$REMOTE_DEST/\""
+                    eval "$rsync_cmd \"$BACKUP_ROOT/$deployment/$TIMESTAMP.tar.gz\" \"$REMOTE_DEST/$deployment/\""
                 else
                     eval "$rsync_cmd \"$backup_dir/\" \"$REMOTE_DEST/$deployment/$TIMESTAMP/\""
                 fi
