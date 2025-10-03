@@ -123,7 +123,8 @@ check_requirements() {
     fi
 
     if ! command -v rsync &> /dev/null; then
-        print_warning "rsync not found, will use cp instead"
+        print_warning "rsync not found - install with: apt-get install rsync (or yum install rsync)"
+        print_info "Will use cp for local backups, but remote backups require rsync"
     fi
 
     return $missing
@@ -226,6 +227,15 @@ backup_deployment() {
     if [ "$DRY_RUN" = false ]; then
         cd "$deploy_dir"
 
+        # Ensure backup directory exists (in case mkdir -p failed silently)
+        if [ ! -d "$backup_dir" ]; then
+            mkdir -p "$backup_dir" || {
+                print_error "Failed to create backup directory: $backup_dir"
+                cd - > /dev/null
+                return 1
+            }
+        fi
+
         # Ensure database is running for SQL dump
         if [ "$was_running" = true ] || docker compose ps postgres --quiet &>/dev/null; then
             if [ "$was_running" = true ]; then
@@ -233,14 +243,23 @@ backup_deployment() {
                 sleep 5
             fi
 
-            if docker compose exec -T postgres pg_dump -U postgres portfolio_db > "$backup_dir/database.sql" 2>/dev/null; then
-                local sql_size=$(du -h "$backup_dir/database.sql" | cut -f1)
-                print_success "SQL dump created: $sql_size"
+            # Create SQL dump with error checking
+            if docker compose exec -T postgres pg_dump -U postgres portfolio_db > "$backup_dir/database.sql" 2>&1; then
+                if [ -s "$backup_dir/database.sql" ]; then
+                    local sql_size=$(du -h "$backup_dir/database.sql" | cut -f1)
+                    print_success "SQL dump created: $sql_size"
+                else
+                    print_error "SQL dump file is empty"
+                    rm -f "$backup_dir/database.sql"
+                fi
             else
-                print_warning "Could not create SQL dump (container may not be running)"
+                print_error "Failed to create SQL dump"
+                print_info "Check that postgres container is running: docker compose ps"
+                rm -f "$backup_dir/database.sql" 2>/dev/null
             fi
         else
             print_warning "Postgres container not running, skipping SQL dump"
+            print_info "Start deployment first: cd $deploy_dir && docker compose up -d"
         fi
 
         cd - > /dev/null
@@ -362,7 +381,14 @@ EOF
         # Add checksums for verification (optional, can be slow for large backups)
         if [ -d "$backup_dir/data" ]; then
             print_info "Calculating checksums (this may take a moment)..."
-            find "$backup_dir/data" -type f -exec md5 {} + 2>/dev/null | md5 >> "$backup_dir/backup.meta" || true
+            # Use md5sum on Linux, md5 on macOS
+            if command -v md5sum &> /dev/null; then
+                find "$backup_dir/data" -type f -exec md5sum {} + 2>/dev/null | md5sum | awk '{print $1}' >> "$backup_dir/backup.meta" || true
+            elif command -v md5 &> /dev/null; then
+                find "$backup_dir/data" -type f -exec md5 {} + 2>/dev/null | md5 >> "$backup_dir/backup.meta" || true
+            else
+                print_warning "No checksum tool available (md5sum/md5), skipping checksums"
+            fi
         fi
 
         print_success "Metadata created"
@@ -388,47 +414,58 @@ EOF
     if [ -n "$REMOTE_DEST" ]; then
         print_info "Copying to remote destination: $REMOTE_DEST"
         if [ "$DRY_RUN" = false ]; then
-            # Build rsync command with SSH options
-            local rsync_cmd="rsync -avz"
-
-            # Add SSH options if needed
-            if [ -n "$REMOTE_SSH_PORT" ] || [ -n "$REMOTE_SSH_KEY" ]; then
-                local ssh_opts=""
-                if [ -n "$REMOTE_SSH_PORT" ] && [ "$REMOTE_SSH_PORT" != "22" ]; then
-                    ssh_opts="-p $REMOTE_SSH_PORT"
-                fi
-                if [ -n "$REMOTE_SSH_KEY" ]; then
-                    ssh_opts="$ssh_opts -i $REMOTE_SSH_KEY"
-                fi
-                rsync_cmd="$rsync_cmd -e \"ssh $ssh_opts\""
-            fi
-
-            # Execute rsync
-            if [ "$COMPRESS" = true ]; then
-                eval "$rsync_cmd \"$BACKUP_ROOT/$deployment/$TIMESTAMP.tar.gz\" \"$REMOTE_DEST/\""
+            # Check if rsync is available
+            if ! command -v rsync &> /dev/null; then
+                print_error "rsync is required for remote backups but not installed"
+                print_info "Install with: apt-get install rsync (or yum install rsync)"
+                print_warning "Skipping remote backup"
             else
-                eval "$rsync_cmd \"$backup_dir/\" \"$REMOTE_DEST/$deployment/$TIMESTAMP/\""
-            fi
+                # Build rsync command with SSH options
+                local rsync_cmd="rsync -avz"
 
-            if [ $? -eq 0 ]; then
-                print_success "Copied to remote destination"
-
-                # Verify remote backup if enabled
-                if [ -f "$CONFIG_FILE" ] && grep -q "REMOTE_BACKUP_VERIFY=true" "$CONFIG_FILE"; then
-                    print_info "Verifying remote backup..."
-                    if [ "$COMPRESS" = true ]; then
-                        local local_size=$(du -sh "$BACKUP_ROOT/$deployment/$TIMESTAMP.tar.gz" | cut -f1)
-                        print_info "Local backup size: $local_size"
-                    else
-                        local local_size=$(du -sh "$backup_dir" | cut -f1)
-                        print_info "Local backup size: $local_size"
+                # Add SSH options if needed
+                if [ -n "$REMOTE_SSH_PORT" ] || [ -n "$REMOTE_SSH_KEY" ]; then
+                    local ssh_opts=""
+                    if [ -n "$REMOTE_SSH_PORT" ] && [ "$REMOTE_SSH_PORT" != "22" ]; then
+                        ssh_opts="-p $REMOTE_SSH_PORT"
                     fi
+                    if [ -n "$REMOTE_SSH_KEY" ]; then
+                        ssh_opts="$ssh_opts -i $REMOTE_SSH_KEY"
+                    fi
+                    rsync_cmd="$rsync_cmd -e \"ssh $ssh_opts\""
                 fi
-            else
-                print_error "Failed to copy to remote destination"
+
+                # Execute rsync
+                if [ "$COMPRESS" = true ]; then
+                    eval "$rsync_cmd \"$BACKUP_ROOT/$deployment/$TIMESTAMP.tar.gz\" \"$REMOTE_DEST/\""
+                else
+                    eval "$rsync_cmd \"$backup_dir/\" \"$REMOTE_DEST/$deployment/$TIMESTAMP/\""
+                fi
+
+                if [ $? -eq 0 ]; then
+                    print_success "Copied to remote destination"
+
+                    # Verify remote backup if enabled
+                    if [ -f "$CONFIG_FILE" ] && grep -q "REMOTE_BACKUP_VERIFY=true" "$CONFIG_FILE"; then
+                        print_info "Verifying remote backup..."
+                        if [ "$COMPRESS" = true ]; then
+                            local local_size=$(du -sh "$BACKUP_ROOT/$deployment/$TIMESTAMP.tar.gz" | cut -f1)
+                            print_info "Local backup size: $local_size"
+                        else
+                            local local_size=$(du -sh "$backup_dir" | cut -f1)
+                            print_info "Local backup size: $local_size"
+                        fi
+                    fi
+                else
+                    print_error "Failed to copy to remote destination"
+                    print_info "Check network connectivity and SSH access"
+                fi
             fi
         else
             print_info "DRY RUN: Would copy to $REMOTE_DEST"
+            if ! command -v rsync &> /dev/null; then
+                print_warning "DRY RUN: rsync not installed, remote backup would fail"
+            fi
             if [ -n "$REMOTE_SSH_PORT" ] && [ "$REMOTE_SSH_PORT" != "22" ]; then
                 print_info "DRY RUN: Would use SSH port: $REMOTE_SSH_PORT"
             fi
