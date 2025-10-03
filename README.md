@@ -8,6 +8,32 @@ A professional portfolio content management system with local backend support, e
 
 👉 **[Email Setup Guide](EMAIL_SETUP.md)** - Complete instructions for configuring email services
 
+## 💾 Backup & Restore System
+
+**Complete backup solution** for portfolio deployments with NAS/remote backup support.
+
+👉 **[Backup Documentation](BACKUP_README.md)** - Complete backup and restore guide
+
+Features:
+- ✅ Automated backups (cron-ready)
+- ✅ Remote backup to NAS via SSH
+- ✅ Custom SSH port support
+- ✅ Compression and verification
+- ✅ Automatic cleanup of old backups
+- ✅ Dry-run testing mode
+
+Quick start:
+```bash
+# Create backup
+./backup-deployment.sh folioio
+
+# List backups
+./list-backups.sh
+
+# Restore backup
+./restore-deployment.sh folioio latest
+```
+
 ## 🔐 Admin Account Setup
 
 **Create Admin Account**: Use the built-in script to easily create an admin account:
