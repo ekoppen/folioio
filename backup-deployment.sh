@@ -102,8 +102,13 @@ Examples:
   $0 folioio                    # Backup folioio deployment
   $0 pucktest --compress        # Backup and compress pucktest
   $0 --all                      # Backup all deployments
-  $0 folioio --quick            # Quick SQL dump only
+  $0 folioio --quick            # Quick SQL dump only (no file permissions needed)
   $0 folioio --dry-run          # Test without making changes
+
+Notes:
+  - Script will automatically try sudo if permission denied on data directory
+  - Use --quick mode if you only need the database dump (no sudo needed)
+  - SQL dump is always created even if data directory backup fails
 
 Backup location: $BACKUP_ROOT/[deployment]/[timestamp]/
 EOF
@@ -255,18 +260,48 @@ backup_deployment() {
             print_info "MinIO files: $minio_files"
 
             if [ "$DRY_RUN" = false ]; then
+                # Try to copy with current permissions first
+                local copy_success=false
+
                 if [ "$INCREMENTAL" = true ] && command -v rsync &> /dev/null; then
                     print_info "Using rsync for incremental backup..."
-                    rsync -av --progress "$deploy_dir/data/" "$backup_dir/data/"
+                    if rsync -av --progress "$deploy_dir/data/" "$backup_dir/data/" 2>/dev/null; then
+                        copy_success=true
+                    fi
                 else
                     print_info "Copying data directory..."
-                    cp -r "$deploy_dir/data/" "$backup_dir/data/"
+                    if cp -r "$deploy_dir/data/" "$backup_dir/data/" 2>/dev/null; then
+                        copy_success=true
+                    fi
                 fi
 
-                local data_size=$(du -sh "$backup_dir/data" | cut -f1)
-                print_success "Data directory backed up: $data_size"
+                # If regular copy fails due to permissions, try with sudo
+                if [ "$copy_success" = false ]; then
+                    print_warning "Permission denied, trying with sudo..."
+
+                    if command -v sudo &> /dev/null; then
+                        if [ "$INCREMENTAL" = true ] && command -v rsync &> /dev/null; then
+                            sudo rsync -av "$deploy_dir/data/" "$backup_dir/data/"
+                        else
+                            sudo cp -r "$deploy_dir/data/" "$backup_dir/data/"
+                        fi
+
+                        # Fix ownership of backed up files
+                        sudo chown -R $(id -u):$(id -g) "$backup_dir/data/"
+                        copy_success=true
+                        print_success "Backup completed with elevated permissions"
+                    else
+                        print_error "Sudo not available and permission denied"
+                        print_warning "Consider using --quick mode for SQL dump only"
+                    fi
+                fi
+
+                if [ "$copy_success" = true ]; then
+                    local data_size=$(du -sh "$backup_dir/data" | cut -f1)
+                    print_success "Data directory backed up: $data_size"
+                fi
             else
-                local data_size=$(du -sh "$deploy_dir/data" | cut -f1)
+                local data_size=$(du -sh "$deploy_dir/data" 2>/dev/null | cut -f1 || echo "N/A")
                 print_info "DRY RUN: Would backup $data_size of data to $backup_dir/data/"
             fi
         else
