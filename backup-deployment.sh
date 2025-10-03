@@ -17,15 +17,44 @@ NC='\033[0m' # No Color
 BACKUP_ROOT="deployment-backups"
 DEPLOYMENTS_DIR="deployments"
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+CONFIG_FILE="backup.config"
 
 # Options
 QUICK_MODE=false
 COMPRESS=false
 INCREMENTAL=false
 REMOTE_DEST=""
+REMOTE_SSH_PORT=22
+REMOTE_SSH_KEY=""
 STOP_CONTAINERS=false
 DRY_RUN=false
 BACKUP_ALL=false
+
+# Load configuration file if it exists
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+
+    # Apply config defaults
+    if [ "$REMOTE_BACKUP_ENABLED" = true ] && [ -n "$REMOTE_BACKUP_DEST" ]; then
+        REMOTE_DEST="$REMOTE_BACKUP_DEST"
+    fi
+
+    if [ -n "$LOCAL_BACKUP_ROOT" ]; then
+        BACKUP_ROOT="$LOCAL_BACKUP_ROOT"
+    fi
+
+    if [ "$USE_INCREMENTAL" = true ]; then
+        INCREMENTAL=true
+    fi
+
+    if [ "$STOP_CONTAINERS_DURING_BACKUP" = true ]; then
+        STOP_CONTAINERS=true
+    fi
+
+    if [ "$REMOTE_BACKUP_COMPRESS" = true ]; then
+        COMPRESS=true
+    fi
+fi
 
 # Functions
 print_header() {
@@ -324,14 +353,53 @@ EOF
     if [ -n "$REMOTE_DEST" ]; then
         print_info "Copying to remote destination: $REMOTE_DEST"
         if [ "$DRY_RUN" = false ]; then
-            if [ "$COMPRESS" = true ]; then
-                rsync -avz "$BACKUP_ROOT/$deployment/$TIMESTAMP.tar.gz" "$REMOTE_DEST/"
-            else
-                rsync -avz "$backup_dir/" "$REMOTE_DEST/$deployment/$TIMESTAMP/"
+            # Build rsync command with SSH options
+            local rsync_cmd="rsync -avz"
+
+            # Add SSH options if needed
+            if [ -n "$REMOTE_SSH_PORT" ] || [ -n "$REMOTE_SSH_KEY" ]; then
+                local ssh_opts=""
+                if [ -n "$REMOTE_SSH_PORT" ] && [ "$REMOTE_SSH_PORT" != "22" ]; then
+                    ssh_opts="-p $REMOTE_SSH_PORT"
+                fi
+                if [ -n "$REMOTE_SSH_KEY" ]; then
+                    ssh_opts="$ssh_opts -i $REMOTE_SSH_KEY"
+                fi
+                rsync_cmd="$rsync_cmd -e \"ssh $ssh_opts\""
             fi
-            print_success "Copied to remote destination"
+
+            # Execute rsync
+            if [ "$COMPRESS" = true ]; then
+                eval "$rsync_cmd \"$BACKUP_ROOT/$deployment/$TIMESTAMP.tar.gz\" \"$REMOTE_DEST/\""
+            else
+                eval "$rsync_cmd \"$backup_dir/\" \"$REMOTE_DEST/$deployment/$TIMESTAMP/\""
+            fi
+
+            if [ $? -eq 0 ]; then
+                print_success "Copied to remote destination"
+
+                # Verify remote backup if enabled
+                if [ -f "$CONFIG_FILE" ] && grep -q "REMOTE_BACKUP_VERIFY=true" "$CONFIG_FILE"; then
+                    print_info "Verifying remote backup..."
+                    if [ "$COMPRESS" = true ]; then
+                        local local_size=$(du -sh "$BACKUP_ROOT/$deployment/$TIMESTAMP.tar.gz" | cut -f1)
+                        print_info "Local backup size: $local_size"
+                    else
+                        local local_size=$(du -sh "$backup_dir" | cut -f1)
+                        print_info "Local backup size: $local_size"
+                    fi
+                fi
+            else
+                print_error "Failed to copy to remote destination"
+            fi
         else
             print_info "DRY RUN: Would copy to $REMOTE_DEST"
+            if [ -n "$REMOTE_SSH_PORT" ] && [ "$REMOTE_SSH_PORT" != "22" ]; then
+                print_info "DRY RUN: Would use SSH port: $REMOTE_SSH_PORT"
+            fi
+            if [ -n "$REMOTE_SSH_KEY" ]; then
+                print_info "DRY RUN: Would use SSH key: $REMOTE_SSH_KEY"
+            fi
         fi
     fi
 

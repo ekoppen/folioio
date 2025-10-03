@@ -1,0 +1,72 @@
+# Backup Configuration
+# Copy this file to backup.config and customize for your environment
+# The backup scripts will automatically use settings from backup.config if it exists
+
+# ============================================================================
+# Remote Backup Destination (NAS / Remote Server)
+# ============================================================================
+# Enable automatic remote backup after local backup completes
+REMOTE_BACKUP_ENABLED=false
+
+# Remote destination for backups (uses rsync)
+# Format: user@host:/path or /path/to/mounted/nas
+# Examples:
+#   REMOTE_BACKUP_DEST="user@nas.local:/volume1/backups/folioio"
+#   REMOTE_BACKUP_DEST="/Volumes/NAS/backups/folioio"
+#   REMOTE_BACKUP_DEST="user@192.168.1.100:/backups/folioio"
+REMOTE_BACKUP_DEST=""
+
+# SSH port for remote backup (default: 22)
+REMOTE_SSH_PORT=22
+
+# SSH key for remote backup (optional, leave empty to use default)
+# Example: REMOTE_SSH_KEY="$HOME/.ssh/nas_backup_key"
+REMOTE_SSH_KEY=""
+
+# Remote backup options
+REMOTE_BACKUP_COMPRESS=true      # Compress before uploading (saves bandwidth)
+REMOTE_BACKUP_DELETE=false       # Delete old backups from remote after upload
+REMOTE_BACKUP_VERIFY=true        # Verify remote backup after upload
+
+# ============================================================================
+# Local Backup Settings
+# ============================================================================
+# Local backup root directory
+LOCAL_BACKUP_ROOT="deployment-backups"
+
+# Keep backups for X days (automated cleanup)
+BACKUP_RETENTION_DAYS=30
+
+# Minimum number of backups to keep (even if older than retention period)
+BACKUP_MIN_KEEP=3
+
+# ============================================================================
+# Notification Settings
+# ============================================================================
+# Enable email notifications (requires mail command configured)
+EMAIL_NOTIFICATIONS=false
+EMAIL_TO=""
+EMAIL_FROM="backup@localhost"
+
+# Enable Slack notifications (requires webhook URL)
+SLACK_NOTIFICATIONS=false
+SLACK_WEBHOOK_URL=""
+
+# ============================================================================
+# Backup Performance Settings
+# ============================================================================
+# Use incremental backups (faster for large data sets)
+USE_INCREMENTAL=false
+
+# Stop containers during backup (ensures consistency)
+STOP_CONTAINERS_DURING_BACKUP=false
+
+# ============================================================================
+# Security Settings
+# ============================================================================
+# Encrypt backups (requires openssl)
+ENCRYPT_BACKUPS=false
+ENCRYPTION_PASSWORD=""  # Leave empty to be prompted
+
+# Exclude sensitive files from backup
+EXCLUDE_PATTERNS=("*.log" "*.tmp")

@@ -19,6 +19,12 @@ deployments/
 data/
 */data/
 
+# Backup directories and configuration (may contain sensitive data)
+deployment-backups/
+backup.config
+backup-automation.log
+*.bak
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

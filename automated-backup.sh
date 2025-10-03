@@ -11,6 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="$SCRIPT_DIR/backup-automation.log"
 BACKUP_SCRIPT="$SCRIPT_DIR/backup-deployment.sh"
 LIST_SCRIPT="$SCRIPT_DIR/list-backups.sh"
+CONFIG_FILE="$SCRIPT_DIR/backup.config"
 MAX_LOG_SIZE=$((10 * 1024 * 1024))  # 10MB
 
 # Cleanup settings
@@ -22,6 +23,24 @@ MIN_BACKUPS_TO_KEEP=3
 SEND_EMAIL=false
 EMAIL_TO=""
 EMAIL_FROM="backup@localhost"
+
+# Load configuration file if it exists
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+
+    # Apply config defaults
+    if [ -n "$BACKUP_RETENTION_DAYS" ]; then
+        CLEANUP_DAYS=$BACKUP_RETENTION_DAYS
+    fi
+
+    if [ -n "$BACKUP_MIN_KEEP" ]; then
+        MIN_BACKUPS_TO_KEEP=$BACKUP_MIN_KEEP
+    fi
+
+    if [ "$EMAIL_NOTIFICATIONS" = true ]; then
+        SEND_EMAIL=true
+    fi
+fi
 
 # Exit codes
 EXIT_SUCCESS=0
